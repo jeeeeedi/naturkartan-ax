@@ -1,5 +1,5 @@
 /* =========================================================
-   Åland Parks — Configuration Template
+   Naturkartan.ax — Configuration Template
    Copy this file to config.js and fill in your keys.
    config.js is gitignored and never committed.
    ========================================================= */

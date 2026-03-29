@@ -1,5 +1,5 @@
 /* =========================================================
-   Åland Parks — Shared Data
+   Naturkartan.ax — Shared Data
    Coordinates sourced from Ålands landskapsregering GIS
    (kartor.regeringen.ax) via the official ALR_Naturreservat
    feature service. All 62 active protected areas included.

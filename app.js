@@ -1,5 +1,5 @@
 /* =========================================================
-   Åland Parks — Interactive Map App
+   Naturkartan.ax — Interactive Map App
    ========================================================= */
 (function () {
   'use strict';

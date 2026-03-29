@@ -1,5 +1,5 @@
 /* =========================================================
-   Åland Parks — User Contributions
+   Naturkartan.ax — User Contributions
    No registration required. Suggestions saved to localStorage
    and reviewed by the admin in admin.html.
    ========================================================= */

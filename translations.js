@@ -1,5 +1,5 @@
 /* =========================================================
-   Åland Parks — Translations
+   Naturkartan.ax — Translations
    Languages: sv (Svenska), en (English), fi (Suomi)
    ========================================================= */
 window.ALAND_TRANSLATIONS = {
