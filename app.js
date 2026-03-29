@@ -109,6 +109,16 @@
       btn.classList.toggle('active', btn.dataset.lang === lang);
     });
 
+    // Rebuild detail panel if currently open (language switch)
+    if (document.body.classList.contains('detail-open')) {
+      const panel = document.getElementById('park-detail');
+      const name  = panel && panel.querySelector('.park-detail-name');
+      if (name) {
+        const park = PARKS.find(p => p.name === name.textContent);
+        if (park) showParkDetail(park);
+      }
+    }
+
     document.dispatchEvent(new CustomEvent('aland:langChanged'));
   }
 
@@ -318,14 +328,7 @@
       textWrap.append(strong, sub);
       li.append(dot, textWrap);
 
-      li.addEventListener('click', () => {
-        map.flyTo([park.lat, park.lng], 13, { duration: 1.0 });
-        if (parkGroups[park.category] && !map.hasLayer(parkGroups[park.category])) {
-          parkGroups[park.category].addTo(map);
-        }
-        if (parkMarkers[park.id]) parkMarkers[park.id].openPopup();
-        if (window.innerWidth < 768) closeSidebar();
-      });
+      li.addEventListener('click', () => showParkDetail(park));
 
       ul.appendChild(li);
     });
@@ -443,7 +446,201 @@
   }
 
   // =========================================================
-  // 11. GEOLOCATION
+  // 11. PARK DETAIL PANEL
+  // =========================================================
+
+  const FEATURE_ICONS = {
+    'Vandringsstigar':       '\uD83E\uDD7E',
+    'Vandringsleder':        '\uD83E\uDD7E',
+    'Promenadstigar':        '\uD83D\uDEB6',
+    'Promenadstr\u00e5k':   '\uD83D\uDEB6',
+    'F\u00e5gelskådning':   '\uD83E\uDD85',
+    'Parkering':             '\uD83C\uDD7F\uFE0F',
+    'Kustmilj\u00f6':       '\uD83C\uDF0A',
+    'Bad':                   '\uD83C\uDFCA',
+    'Badstrand':             '\uD83C\uDFD6\uFE0F',
+    'Sandstrand':            '\uD83C\uDFD6\uFE0F',
+    'Historiska ruiner':     '\uD83C\uDFDB\uFE0F',
+    'Historisk byggnad':     '\uD83C\uDFDB\uFE0F',
+    'Informationsskyltar':   '\u2139\uFE0F',
+    'Guidning':              '\uD83D\uDC64',
+    'Mus\u00e9':             '\uD83C\uDFDB\uFE0F',
+    'Kaf\u00e9':             '\u2615',
+    'Souvenirbutik':         '\uD83D\uDED2',
+    'Friluftsmuseum':        '\uD83C\uDFE1',
+    'Utsiktstorn':           '\uD83D\uDDFC',
+    'Utsikt':                '\uD83D\uDC41\uFE0F',
+    'Havsutsikt':            '\uD83C\uDF05',
+    'Gammelskog':            '\uD83C\uDF32',
+    'Klippvandring':         '\uD83E\uDDD7',
+    'Ringm\u00e4rkning':    '\uD83D\uDD2C',
+    'B\u00e5ttransport kr\u00e4vs': '\u26F5',
+    'Forskarstuga':          '\uD83D\uDD2D',
+    'Cykelleder':            '\uD83D\uDEB4',
+    'Grillplatser':          '\uD83D\uDD25',
+    'H\u00e4llmark':        '\uD83E\uDEA8',
+    'Kajakpaddling':         '\uD83D\uDEF6',
+    'Havskajakpaddling':     '\uD83D\uDEF6',
+    'Fiske':                 '\uD83C\uDFA3',
+    'Naturturism':           '\uD83C\uDF3F',
+    'F\u00e4rjef\u00f6rbindelser': '\u26F4\uFE0F',
+    'Klosterruiner':         '\u26EA',
+    'Karg natur':            '\uD83C\uDFDD\uFE0F',
+    'Rodd':                  '\uD83D\uDEA3',
+    'Djur p\u00e5 g\u00e5rden': '\uD83D\uDC04',
+    'Lekplats':              '\uD83C\uDFA0',
+    'Blomsterrabatter':      '\uD83C\uDF38',
+    'Parkb\u00e4nkar':      '\uD83E\uDE91',
+  };
+
+  function showParkDetail(park) {
+    const panel   = document.getElementById('park-detail');
+    const cfg     = CATEGORY_CONFIG[park.category];
+    panel.textContent = '';
+
+    // --- Header ---
+    const header = document.createElement('div');
+    header.className = 'park-detail-header';
+
+    const backBtn = document.createElement('button');
+    backBtn.className = 'park-detail-back';
+    backBtn.textContent = '\u2190';
+    backBtn.setAttribute('aria-label', 'Back to list');
+    backBtn.addEventListener('click', hideParkDetail);
+
+    const headerInfo = document.createElement('div');
+    headerInfo.className = 'park-detail-header-info';
+
+    const catTag = document.createElement('span');
+    catTag.className = 'park-detail-category-tag';
+    catTag.style.color = cfg ? cfg.color : '#888';
+    catTag.textContent = tCat(park.category, 'label');
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'park-detail-name';
+    nameEl.textContent = park.name;
+
+    headerInfo.append(catTag, nameEl);
+    header.append(backBtn, headerInfo);
+
+    // --- Body ---
+    const body = document.createElement('div');
+    body.className = 'park-detail-body';
+
+    // Meta chips
+    const meta = document.createElement('div');
+    meta.className = 'park-detail-meta';
+
+    if (park.municipality) {
+      meta.appendChild(makeChip('\uD83D\uDCCD', park.municipality));
+    }
+    if (park.area) {
+      meta.appendChild(makeChip('\uD83D\uDDFA\uFE0F', park.area));
+    }
+    if (meta.children.length) body.appendChild(meta);
+
+    // Description
+    const desc = tPark(park.id, 'description');
+    if (desc) {
+      const descEl = document.createElement('p');
+      descEl.className = 'park-detail-desc';
+      descEl.textContent = desc;
+      body.appendChild(descEl);
+    }
+
+    // Features
+    if (park.features && park.features.length) {
+      const section = document.createElement('div');
+
+      const sectionTitle = document.createElement('div');
+      sectionTitle.className = 'park-detail-section-title';
+      sectionTitle.textContent = t('featuresTitle');
+
+      const grid = document.createElement('div');
+      grid.className = 'park-detail-features';
+
+      park.features.forEach(f => {
+        const item = document.createElement('div');
+        item.className = 'park-detail-feature';
+
+        const icon = document.createElement('span');
+        icon.className = 'park-detail-feature-icon';
+        icon.textContent = FEATURE_ICONS[f] || '\u2022';
+
+        const label = document.createElement('span');
+        label.textContent = tFeature(f);
+
+        item.append(icon, label);
+        grid.appendChild(item);
+      });
+
+      section.append(sectionTitle, grid);
+      body.appendChild(section);
+    }
+
+    // Coordinates
+    if (park.lat && park.lng) {
+      const coords = document.createElement('div');
+      coords.className = 'park-detail-coords';
+      coords.textContent = park.lat.toFixed(5) + ', ' + park.lng.toFixed(5);
+      body.appendChild(coords);
+    }
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'park-detail-actions';
+
+    const centerBtn = document.createElement('button');
+    centerBtn.className = 'park-detail-btn-primary';
+    centerBtn.textContent = t('detailCenter');
+    centerBtn.addEventListener('click', () => {
+      hideParkDetail();
+      map.flyTo([park.lat, park.lng], 14, { duration: 1.0 });
+      if (parkGroups[park.category] && !map.hasLayer(parkGroups[park.category])) {
+        parkGroups[park.category].addTo(map);
+      }
+      if (parkMarkers[park.id]) parkMarkers[park.id].openPopup();
+      closeSidebar();
+    });
+
+    const suggestBtn = document.createElement('button');
+    suggestBtn.className = 'park-detail-btn-secondary';
+    suggestBtn.textContent = t('suggestEdit');
+    suggestBtn.addEventListener('click', () => {
+      document.dispatchEvent(new CustomEvent('aland:openContribute', {
+        detail: { type: 'edit', parkId: park.id },
+      }));
+    });
+
+    actions.append(centerBtn, suggestBtn);
+    body.appendChild(actions);
+
+    panel.append(header, body);
+
+    document.body.classList.add('detail-open');
+    // On mobile keep sidebar open to show the detail
+    document.body.classList.add('sidebar-open');
+    // Scroll the panel to top
+    body.scrollTop = 0;
+  }
+
+  function hideParkDetail() {
+    document.body.classList.remove('detail-open');
+  }
+
+  function makeChip(icon, text) {
+    const chip = document.createElement('div');
+    chip.className = 'park-detail-meta-item';
+    const iconEl = document.createElement('span');
+    iconEl.textContent = icon;
+    const textEl = document.createElement('span');
+    textEl.textContent = text;
+    chip.append(iconEl, textEl);
+    return chip;
+  }
+
+  // =========================================================
+  // 12. GEOLOCATION
   // =========================================================
 
   let locationMarker   = null;
