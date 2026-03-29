@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Åland Parks — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; font-size: 14px; background: #0e1a12; color: #e0ece4; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: #2d5040; border-radius: 3px; }
+
+    /* ---- Header ------------------------------------------ */
+    #header {
+      height: 50px;
+      background: #0a130d;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 200;
+    }
+    #header h1 {
+      font-family: 'Lora', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #e0ece4;
+      flex: 1;
+    }
+    #header h1 span { color: #5a8a6a; font-weight: 400; font-size: 13px; margin-left: 8px; }
+    .header-btn {
+      padding: 5px 12px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color: #c0d8c8;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .header-btn:hover { background: rgba(255,255,255,0.12); }
+    .header-btn.primary { background: #2d6a44; border-color: #3a8a5a; color: #fff; }
+    .header-btn.primary:hover { background: #3a8a5a; }
+    .header-btn.danger  { background: rgba(180,50,50,0.2); border-color: rgba(180,50,50,0.4); color: #f09090; }
+    .header-btn.danger:hover { background: rgba(180,50,50,0.35); }
+    #save-status { font-size: 12px; color: #5a9a6a; min-width: 80px; }
+
+    /* ---- Layout ------------------------------------------ */
+    #layout {
+      display: flex;
+      height: 100vh;
+      padding-top: 50px;
+    }
+
+    /* ---- Panel ------------------------------------------- */
+    #panel {
+      width: 320px;
+      flex-shrink: 0;
+      height: calc(100vh - 50px);
+      background: #101a14;
+      border-right: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* -- Parks list -- */
+    #list-section {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    #list-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap: 8px;
+    }
+    #list-header span {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6a9a7a;
+      flex: 1;
+    }
+    #btn-add-park {
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #3a8a5a;
+      background: #2d6a44;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #btn-add-park:hover { background: #3a8a5a; }
+
+    #parks-list { list-style: none; }
+    .park-list-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.15s;
+    }
+    .park-list-item:hover  { background: rgba(255,255,255,0.04); }
+    .park-list-item.active {
+      background: rgba(255,255,255,0.07);
+      border-left-color: var(--c);
+    }
+    .park-list-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--c);
+      flex-shrink: 0;
+    }
+    .park-list-text { overflow: hidden; }
+    .park-list-text strong { display: block; font-size: 12px; color: #d8ece0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .park-list-text span { font-size: 11px; color: #6a9a7a; }
+
+    /* -- Edit form -- */
+    #form-section {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      background: #0e1810;
+      overflow-y: auto;
+      max-height: 55vh;
+    }
+    #form-section.hidden { display: none; }
+
+    #form-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap: 8px;
+    }
+    #form-header h2 {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6a9a7a;
+      flex: 1;
+    }
+    #btn-form-cancel {
+      background: none;
+      border: none;
+      color: #6a9a7a;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    #btn-form-cancel:hover { color: #c0d8c8; }
+
+    #place-hint {
+      font-size: 12px;
+      color: #f0c060;
+      padding: 8px 14px;
+      background: rgba(240,192,0,0.08);
+      border-bottom: 1px solid rgba(240,192,0,0.15);
+    }
+
+    #park-form { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+    .field-row { display: flex; flex-direction: column; gap: 4px; }
+    .field-row.two-col { flex-direction: row; gap: 8px; }
+    .field-row.two-col > * { flex: 1; }
+    label.field-label { font-size: 11px; font-weight: 600; color: #7aaa8a; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    input[type="text"], input[type="number"], select, textarea {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 5px;
+      padding: 6px 9px;
+      color: #d8ece0;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #3a8a5a; }
+    input[type="number"] { -moz-appearance: textfield; }
+    textarea { resize: vertical; min-height: 70px; }
+    select option { background: #1a2e1e; }
+
+    #coord-hint {
+      font-size: 11px;
+      color: #5a8a6a;
+      padding: 4px 0;
+    }
+
+    #form-actions {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    #btn-save-park {
+      flex: 1;
+      padding: 7px 0;
+      border-radius: 5px;
+      border: none;
+      background: #2d6a44;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #btn-save-park:hover { background: #3a8a5a; }
+    #btn-delete-park {
+      padding: 7px 12px;
+      border-radius: 5px;
+      border: 1px solid rgba(180,50,50,0.4);
+      background: rgba(180,50,50,0.15);
+      color: #f09090;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    #btn-delete-park:hover { background: rgba(180,50,50,0.3); }
+
+    /* ---- Tabs -------------------------------------------- */
+    #panel-tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px 8px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #6a9a7a;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn:hover { color: #c0d8c8; }
+    .tab-btn.active { color: #d8ece0; border-bottom-color: #3a8a5a; }
+    #contrib-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #c05050;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      padding: 0 4px;
+      margin-left: 5px;
+    }
+    #contrib-badge[hidden] { display: none; }
+
+    #parks-tab  { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+    #contrib-tab { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+    #contrib-tab[hidden], #parks-tab[hidden] { display: none; }
+
+    /* ---- Contributions list ------------------------------ */
+    #contrib-list-header {
+      padding: 8px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6a9a7a;
+      flex-shrink: 0;
+    }
+    #contributions-list { list-style: none; overflow-y: auto; flex: 1; }
+
+    .contrib-empty {
+      padding: 20px 14px;
+      font-size: 13px;
+      color: #5a8a6a;
+      font-style: italic;
+      text-align: center;
+    }
+    .contrib-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .contrib-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .contrib-type-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+    .contrib-type-new  { background: rgba(58,138,90,0.25); color: #7ad0a0; }
+    .contrib-type-edit { background: rgba(100,160,220,0.2); color: #90c0f0; }
+    .contrib-date { font-size: 11px; color: #5a8a6a; margin-left: auto; }
+
+    .contrib-diff-table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+    .contrib-diff-table td { padding: 2px 4px; vertical-align: top; font-size: 11px; }
+    .cdiff-label { color: #6a9a7a; white-space: nowrap; padding-right: 8px; width: 80px; }
+    .cdiff-val   { color: #c0d8c8; word-break: break-word; }
+    .cdiff-val del { color: #f09090; text-decoration: line-through; }
+    .cdiff-val ins { color: #90f0a0; text-decoration: none; }
+
+    .contrib-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      color: #5a8a6a;
+      font-style: italic;
+    }
+
+    .contrib-photo-wrap { margin: 6px 0; border-radius: 6px; overflow: hidden; }
+    .contrib-photo-thumb { width: 100%; max-height: 160px; object-fit: cover; display: block; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); }
+
+    .contrib-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .contrib-btn {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .contrib-btn-approve { background: #2d6a44; border-color: #3a8a5a; color: #fff; }
+    .contrib-btn-approve:hover { background: #3a8a5a; }
+    .contrib-btn-dismiss { background: rgba(180,50,50,0.15); border-color: rgba(180,50,50,0.4); color: #f09090; }
+    .contrib-btn-dismiss:hover { background: rgba(180,50,50,0.3); }
+
+    /* ---- Map --------------------------------------------- */
+    #map-container { flex: 1; position: relative; }
+    #map { width: 100%; height: 100%; }
+    #map.placing-mode { cursor: crosshair; }
+
+    /* ---- Leaflet overrides ------------------------------- */
+    .leaflet-control-zoom a { background: rgba(14,24,16,0.95) !important; color: #d0e8d8 !important; border-color: rgba(58,138,90,0.3) !important; }
+    .leaflet-control-zoom a:hover { background: #2d5040 !important; }
+    .leaflet-control-attribution { background: rgba(10,16,12,0.85) !important; color: #4a7a5a !important; font-size: 10px !important; }
+    .leaflet-control-attribution a { color: #6a9a7a !important; }
+
+    /* ---- Markers ----------------------------------------- */
+    .admin-marker {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 12px; font-weight: 700;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      border: 2px solid rgba(255,255,255,0.6);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .admin-marker.selected {
+      border-color: #fff;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.4), 0 3px 12px rgba(0,0,0,0.6);
+      transform: scale(1.15);
+    }
+  </style>
+</head>
+<body>
+
+  <header id="header">
+    <h1>Åland Parks <span>Admin</span></h1>
+    <span id="save-status"></span>
+    <button class="header-btn" id="btn-export" title="Download updated parks-data.js">&#11015; Export JS</button>
+    <button class="header-btn danger" id="btn-reset" title="Clear localStorage and revert to defaults in parks-data.js">&#8635; Reset to defaults</button>
+    <a class="header-btn" href="index.html" target="_blank">&#128065; View site</a>
+  </header>
+
+  <div id="layout">
+
+    <div id="panel">
+      <div id="panel-tabs">
+        <button class="tab-btn active" id="tab-parks">Parker</button>
+        <button class="tab-btn" id="tab-contributions">Bidrag <span id="contrib-badge" hidden></span></button>
+      </div>
+
+      <div id="parks-tab">
+        <div id="list-section">
+          <div id="list-header">
+            <span id="list-count">Parker</span>
+            <button id="btn-add-park">+ Lägg till park</button>
+          </div>
+          <ul id="parks-list"></ul>
+        </div>
+
+        <div id="form-section" class="hidden">
+          <div id="form-header">
+            <h2 id="form-title">Redigera park</h2>
+            <button id="btn-form-cancel" title="Avbryt">&times;</button>
+          </div>
+          <div id="place-hint" style="display:none">
+            &#128205; Klicka på kartan för att placera parken
+          </div>
+          <form id="park-form" autocomplete="off">
+            <div class="field-row">
+              <label class="field-label" for="f-name">Namn</label>
+              <input type="text" id="f-name" required />
+            </div>
+            <div class="field-row">
+              <label class="field-label" for="f-category">Typ</label>
+              <select id="f-category"></select>
+            </div>
+            <div class="field-row">
+              <label class="field-label" for="f-municipality">Kommun</label>
+              <input type="text" id="f-municipality" />
+            </div>
+            <div class="field-row">
+              <label class="field-label" for="f-area">Areal</label>
+              <input type="text" id="f-area" placeholder="t.ex. 72 ha" />
+            </div>
+            <div class="field-row two-col">
+              <div class="field-row">
+                <label class="field-label" for="f-lat">Lat</label>
+                <input type="number" id="f-lat" step="0.00001" />
+              </div>
+              <div class="field-row">
+                <label class="field-label" for="f-lng">Lng</label>
+                <input type="number" id="f-lng" step="0.00001" />
+              </div>
+            </div>
+            <div id="coord-hint">Dra markören på kartan för att uppdatera koordinater</div>
+            <div class="field-row">
+              <label class="field-label" for="f-description">Beskrivning</label>
+              <textarea id="f-description"></textarea>
+            </div>
+            <div class="field-row">
+              <label class="field-label" for="f-features">Faciliteter <span style="font-weight:400;text-transform:none;letter-spacing:0">(kommaseparerade)</span></label>
+              <input type="text" id="f-features" placeholder="Parkering, Vandringsstigar, Kafé" />
+            </div>
+          </form>
+          <div id="form-actions">
+            <button id="btn-save-park">Spara</button>
+            <button id="btn-delete-park">Ta bort</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="contrib-tab" hidden>
+        <div id="contrib-list-header">Väntande bidrag</div>
+        <ul id="contributions-list"></ul>
+      </div>
+    </div>
+
+    <div id="map-container">
+      <div id="map"></div>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="parks-data.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
