@@ -39,7 +39,7 @@ export default function ContributionReview({ onApplied, t }) {
           area: d.area,
           description_sv: d.description,
           features: d.features,
-          location: { type: 'Point', coordinates: [parseFloat(d.lng), parseFloat(d.lat)] },
+          location: `SRID=4326;POINT(${d.lng} ${d.lat})`,
         })
       }
     }

@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { MapContainer, TileLayer, useMap } from 'react-leaflet'
+import { useEffect, useMemo } from 'react'
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet'
 import ParkMarker from './ParkMarker.jsx'
 
 const ALAND_CENTER = [60.18, 20.0]
@@ -18,6 +18,17 @@ function FlyController({ flyTo }) {
 export default function MapView({ parks, categories, selectedPark, flyTo, onSelectPark, parkName }) {
   const categoryMap = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
 
+  const pathCollection = useMemo(() => ({
+    type: 'FeatureCollection',
+    features: parks
+      .filter(p => p.path)
+      .map(p => ({
+        type: 'Feature',
+        geometry: p.path,
+        properties: { id: p.id, category_id: p.category_id },
+      })),
+  }), [parks])
+
   return (
     <MapContainer
       id="map"
@@ -30,6 +41,23 @@ export default function MapView({ parks, categories, selectedPark, flyTo, onSele
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FlyController flyTo={flyTo} />
+      {pathCollection.features.length > 0 && (
+        <GeoJSON
+          key={pathCollection.features.map(f => f.properties.id).join(',')}
+          data={pathCollection}
+          style={(feature) => {
+            const color = categoryMap[feature.properties.category_id]?.color ?? '#888'
+            const isSelected = selectedPark?.id === feature.properties.id
+            return { color, weight: isSelected ? 5 : 3, opacity: isSelected ? 1 : 0.75 }
+          }}
+          onEachFeature={(feature, layer) => {
+            layer.on('click', () => {
+              const park = parks.find(p => p.id === feature.properties.id)
+              if (park) onSelectPark(park)
+            })
+          }}
+        />
+      )}
       {parks.map(park => (
         <ParkMarker
           key={park.id}

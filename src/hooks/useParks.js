@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+// PostgREST may return geography columns as GeoJSON strings or objects
+function parseLocation(loc) {
+  if (!loc) return null
+  if (typeof loc === 'string') {
+    try { return JSON.parse(loc) } catch { return null }
+  }
+  return loc
+}
+
+function normalisePark(p) {
+  return { ...p, location: parseLocation(p.location) }
+}
+
 export function useParks() {
   const [parks, setParks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -13,7 +26,7 @@ export function useParks() {
       .order('name_sv')
       .then(({ data, error }) => {
         if (error) setError(error)
-        else setParks(data ?? [])
+        else setParks((data ?? []).map(normalisePark))
         setLoading(false)
       })
   }, [])
@@ -24,7 +37,7 @@ export function useParks() {
       .from('parks')
       .select('*, categories(*)')
       .order('name_sv')
-    if (!error) setParks(data ?? [])
+    if (!error) setParks((data ?? []).map(normalisePark))
     setLoading(false)
   }
 
