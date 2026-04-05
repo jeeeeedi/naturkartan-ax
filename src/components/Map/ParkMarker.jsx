@@ -19,8 +19,10 @@ function makeIcon(color, selected) {
 }
 
 export default function ParkMarker({ park, category, selected, onClick, label }) {
-  if (!park.location?.coordinates) return null
-  const [lng, lat] = park.location.coordinates
+  // PostgREST returns geography as WKB hex — use coordinates stored in meta instead
+  const lat = park.meta?.lat
+  const lng = park.meta?.lng
+  if (!lat || !lng) return null
   const color = category?.color ?? '#888'
 
   return (

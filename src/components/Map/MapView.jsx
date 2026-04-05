@@ -1,6 +1,25 @@
 import { useEffect, useMemo } from 'react'
-import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-leaflet'
+import L from 'leaflet'
 import ParkMarker from './ParkMarker.jsx'
+
+// Small square icon for facility points (parking, toilet, etc.)
+function makeFacilityIcon(typ) {
+  const icons = { 'Parkering': 'P', 'Toalett': 'WC', 'Eldplats': '🔥', 'Vindskydd': '⛺' }
+  const label = icons[typ] ?? '•'
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      background:#555;color:#fff;font-size:9px;font-weight:bold;
+      width:18px;height:18px;border-radius:3px;
+      display:flex;align-items:center;justify-content:center;
+      border:1px solid rgba(255,255,255,0.6);
+      white-space:nowrap;
+    ">${label}</div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+  })
+}
 
 const ALAND_CENTER = [60.18, 20.0]
 const ALAND_ZOOM = 9
@@ -57,6 +76,17 @@ export default function MapView({ parks, categories, selectedPark, flyTo, onSele
             })
           }}
         />
+      )}
+      {parks.flatMap(park =>
+        (park.meta?.facility_points ?? []).map((fp, i) => (
+          <Marker
+            key={`${park.id}-fp-${i}`}
+            position={[fp.lat, fp.lng]}
+            icon={makeFacilityIcon(fp.typ)}
+          >
+            <Popup>{fp.typ} · {parkName(park)}</Popup>
+          </Marker>
+        ))
       )}
       {parks.map(park => (
         <ParkMarker

@@ -44,14 +44,18 @@ export function useArcGISSync() {
     onProgress('Hämtar faciliteter (Naturstigar lager 0)…')
     const facilitiesGeoJSON = await fetchLayer(NATURSTIGAR_URL, 0)
 
-    // Build: normalised trail name → Set of facility types
+    // Build: normalised trail name → { types: Set, points: [{lat, lng, typ}] }
     const featuresByTrail = {}
     for (const f of facilitiesGeoJSON.features) {
       const plats = normaliseName(f.properties.Plats)
       const typ = f.properties.Typ?.trim()
       if (!plats || !typ) continue
-      if (!featuresByTrail[plats]) featuresByTrail[plats] = new Set()
-      featuresByTrail[plats].add(typ)
+      if (!featuresByTrail[plats]) featuresByTrail[plats] = { types: new Set(), points: [] }
+      featuresByTrail[plats].types.add(typ)
+      const [lng, lat] = f.geometry?.coordinates ?? []
+      if (lat != null && lng != null) {
+        featuresByTrail[plats].points.push({ lat, lng, typ })
+      }
     }
 
     // ── 2. Fetch trail polylines (Service A, layer 1) ─────────────────────────
@@ -85,7 +89,8 @@ export function useArcGISSync() {
       const objectId  = f.properties.OBJECTID
       const namn      = f.properties.Namn?.trim() || `Stig ${objectId}`
       const normNamn  = normaliseName(namn)
-      const facilities = [...(featuresByTrail[normNamn] ?? [])]
+      const trailFacilities = featuresByTrail[normNamn] ?? { types: new Set(), points: [] }
+      const facilities = [...trailFacilities.types]
       const waypoint  = waypointsByName[normNamn] ?? {}
 
       // Length field (e.g. "2.5-5 km") maps to our `area` text column
@@ -111,11 +116,14 @@ export function useArcGISSync() {
         source_url:    NATURSTIGAR_URL,
         synced_at:     new Date().toISOString(),
         meta: {
-          bild:      f.properties.bild    || null,
-          terrang:   f.properties.Terrang || null,
-          typ:       f.properties.TYP     || null,
-          pic_url:   waypoint.pic_url     || null,
-          thumb_url: waypoint.thumb_url   || null,
+          lat:             pt.lat,
+          lng:             pt.lng,
+          bild:            f.properties.bild    || null,
+          terrang:         f.properties.Terrang || null,
+          typ:             f.properties.TYP     || null,
+          pic_url:         waypoint.pic_url     || null,
+          thumb_url:       waypoint.thumb_url   || null,
+          facility_points: trailFacilities.points,
         },
       })
     }
@@ -147,7 +155,7 @@ export function useArcGISSync() {
         source_id:     `arcgis-cykel-${objectId}`,
         source_url:    CYKEL_URL,
         synced_at:     new Date().toISOString(),
-        meta:          { rutt: f.properties.Rutt ?? null },
+        meta:          { lat: pt.lat, lng: pt.lng, rutt: f.properties.Rutt ?? null },
       })
     }
 
