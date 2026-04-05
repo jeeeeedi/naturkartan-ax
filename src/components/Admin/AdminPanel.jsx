@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParks } from '../../hooks/useParks.js'
 import { useCategories } from '../../hooks/useCategories.js'
+import { useArcGISSync } from '../../hooks/useArcGISSync.js'
 import { supabase } from '../../lib/supabase.js'
 import ParkForm from './ParkForm.jsx'
 import ContributionReview from './ContributionReview.jsx'
@@ -8,8 +9,21 @@ import ContributionReview from './ContributionReview.jsx'
 export default function AdminPanel({ onLogout, t }) {
   const { parks, loading, refetch } = useParks()
   const { categories } = useCategories()
+  const { sync } = useArcGISSync()
   const [tab, setTab] = useState('parks') // 'parks' | 'contributions'
   const [editing, setEditing] = useState(null) // null = list, 'new' = new form, park = edit form
+  const [syncStatus, setSyncStatus] = useState(null) // null | { state: 'running'|'done'|'error', message }
+
+  async function handleArcGISSync() {
+    setSyncStatus({ state: 'running', message: 'Startar synkronisering…' })
+    try {
+      const count = await sync((msg) => setSyncStatus({ state: 'running', message: msg }))
+      setSyncStatus({ state: 'done', message: `✓ ${count} parker synkroniserade.` })
+      refetch()
+    } catch (err) {
+      setSyncStatus({ state: 'error', message: `Fel: ${err.message}` })
+    }
+  }
 
   async function handleDelete(park) {
     if (!confirm(t('adminDeleteConfirm'))) return
@@ -54,9 +68,23 @@ export default function AdminPanel({ onLogout, t }) {
             />
           ) : (
             <div className="parks-list-admin">
-              <button className="btn-primary" onClick={() => setEditing('new')}>
-                + {t('adminAddPark')}
-              </button>
+              <div className="parks-list-actions">
+                <button className="btn-primary" onClick={() => setEditing('new')}>
+                  + {t('adminAddPark')}
+                </button>
+                <button
+                  className="btn-secondary"
+                  onClick={handleArcGISSync}
+                  disabled={syncStatus?.state === 'running'}
+                >
+                  🔄 Synka från ArcGIS
+                </button>
+              </div>
+              {syncStatus && (
+                <p className={`sync-status sync-status--${syncStatus.state}`}>
+                  {syncStatus.message}
+                </p>
+              )}
               {loading ? <p>…</p> : (
                 <table className="admin-table">
                   <thead>

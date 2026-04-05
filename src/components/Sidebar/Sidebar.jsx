@@ -91,6 +91,10 @@ export default function Sidebar({
           t={t}
         />
       )}
+      <footer className="sidebar-attribution">
+        Geodata: <a href="https://www.kartor.ax/" target="_blank" rel="noopener">Ålands landskapsregering</a>{' '}
+        <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>
+      </footer>
     </aside>
   )
 }
