@@ -35,7 +35,7 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
       description_en: form.description_en || '',
       description_fi: form.description_fi || '',
       features: form.features.split(',').map(f => f.trim()).filter(Boolean),
-      location: `POINT(${form.lng} ${form.lat})`,
+      location: { type: 'Point', coordinates: [parseFloat(form.lng), parseFloat(form.lat)] },
     }
     await onSave(payload)
     setSaving(false)
