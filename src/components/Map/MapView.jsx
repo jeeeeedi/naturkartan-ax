@@ -1,7 +1,60 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import ParkMarker from './ParkMarker.jsx'
+
+const userDotIcon = L.divIcon({
+  className: '',
+  html: '<div class="user-location-dot"></div>',
+  iconSize: [14, 14],
+  iconAnchor: [7, 7],
+})
+
+function UserLocation() {
+  const map = useMap()
+  const [pos, setPos] = useState(null)
+  const [status, setStatus] = useState('idle') // idle | active | error
+  const watchId = useRef(null)
+
+  function start() {
+    if (!navigator.geolocation) { setStatus('error'); return }
+    setStatus('active')
+    watchId.current = navigator.geolocation.watchPosition(
+      (p) => {
+        const latlng = [p.coords.latitude, p.coords.longitude]
+        setPos(latlng)
+        map.flyTo(latlng, Math.max(map.getZoom(), 13), { duration: 1 })
+      },
+      () => setStatus('error'),
+      { enableHighAccuracy: true }
+    )
+  }
+
+  function stop() {
+    if (watchId.current != null) navigator.geolocation.clearWatch(watchId.current)
+    watchId.current = null
+    setStatus('idle')
+    setPos(null)
+  }
+
+  function toggle() { status === 'active' ? stop() : start() }
+
+  useEffect(() => () => { if (watchId.current != null) navigator.geolocation.clearWatch(watchId.current) }, [])
+
+  return (
+    <>
+      {pos && <Marker position={pos} icon={userDotIcon} zIndexOffset={2000} />}
+      <div
+        id="locate-btn"
+        className={status !== 'idle' ? status : ''}
+        onClick={toggle}
+        title="Show my location"
+      >
+        <span className="icon">{status === 'active' ? 'my_location' : 'location_searching'}</span>
+      </div>
+    </>
+  )
+}
 
 // Small icon for facility points using Material Symbols
 function makeFacilityIcon(typ) {
@@ -36,8 +89,9 @@ const ALAND_ZOOM = 9
 function FlyController({ flyTo }) {
   const map = useMap()
   useEffect(() => {
-    if (!flyTo?.location?.coordinates) return
-    const [lng, lat] = flyTo.location.coordinates
+    const lat = flyTo?.meta?.lat
+    const lng = flyTo?.meta?.lng
+    if (!lat || !lng) return
     map.flyTo([lat, lng], 13, { duration: 1 })
   }, [flyTo, map])
   return null
@@ -46,16 +100,19 @@ function FlyController({ flyTo }) {
 export default function MapView({ parks, categories, selectedPark, flyTo, onSelectPark, parkName }) {
   const categoryMap = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
 
-  const pathCollection = useMemo(() => ({
-    type: 'FeatureCollection',
-    features: parks
-      .filter(p => p.path)
-      .map(p => ({
-        type: 'Feature',
-        geometry: p.path,
-        properties: { id: p.id, category_id: p.category_id },
-      })),
-  }), [parks])
+  const pathCollection = useMemo(() => {
+    const source = selectedPark ? parks.filter(p => p.id === selectedPark.id) : parks
+    return {
+      type: 'FeatureCollection',
+      features: source
+        .filter(p => p.path)
+        .map(p => ({
+          type: 'Feature',
+          geometry: p.path,
+          properties: { id: p.id, category_id: p.category_id },
+        })),
+    }
+  }, [parks, selectedPark])
 
   return (
     <MapContainer
@@ -69,6 +126,7 @@ export default function MapView({ parks, categories, selectedPark, flyTo, onSele
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FlyController flyTo={flyTo} />
+      <UserLocation />
       {pathCollection.features.length > 0 && (
         <GeoJSON
           key={pathCollection.features.map(f => f.properties.id).join(',')}
@@ -86,17 +144,15 @@ export default function MapView({ parks, categories, selectedPark, flyTo, onSele
           }}
         />
       )}
-      {parks.flatMap(park =>
-        (park.meta?.facility_points ?? []).map((fp, i) => (
-          <Marker
-            key={`${park.id}-fp-${i}`}
-            position={[fp.lat, fp.lng]}
-            icon={makeFacilityIcon(fp.typ)}
-          >
-            <Popup>{fp.typ} · {parkName(park)}</Popup>
-          </Marker>
-        ))
-      )}
+      {selectedPark && (selectedPark.meta?.facility_points ?? []).map((fp, i) => (
+        <Marker
+          key={`${selectedPark.id}-fp-${i}`}
+          position={[fp.lat, fp.lng]}
+          icon={makeFacilityIcon(fp.typ)}
+        >
+          <Popup>{fp.typ} · {parkName(selectedPark)}</Popup>
+        </Marker>
+      ))}
       {parks.map(park => (
         <ParkMarker
           key={park.id}
