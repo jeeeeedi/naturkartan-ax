@@ -29,6 +29,14 @@ function midpoint(geometry) {
   return { lng: mid[0], lat: mid[1] }
 }
 
+// Lightweight hash of ArcGIS source fields (excludes translations)
+function contentHash(p) {
+  const str = JSON.stringify([p.name_sv, p.area, p.path, p.features, p.meta])
+  let h = 0
+  for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0
+  return h.toString(36)
+}
+
 // Normalise a trail name for fuzzy matching (strip diacritics, lowercase)
 function normaliseName(name) {
   return (name ?? '')
@@ -159,16 +167,34 @@ export function useArcGISSync() {
       })
     }
 
-    // ── 6. Upsert everything to Supabase ──────────────────────────────────────
-    onProgress(`Skriver ${parks.length} poster till databasen…`)
+    // ── 6. Fetch existing hashes and skip unchanged rows ─────────────────────
+    onProgress('Kontrollerar ändringar…')
+    const { data: existing } = await supabase
+      .from('items')
+      .select('source_id, content_hash')
+
+    const existingMap = Object.fromEntries((existing ?? []).map(r => [r.source_id, r.content_hash]))
+
+    const changed = parks.filter(p => {
+      p.content_hash = contentHash(p)
+      return existingMap[p.source_id] !== p.content_hash
+    })
+
+    // ── 7. Upsert only changed/new rows ───────────────────────────────────────
+    if (changed.length === 0) {
+      onProgress('Inga ändringar hittades.')
+      return 0
+    }
+
+    onProgress(`Skriver ${changed.length} ändrade poster (av ${parks.length})…`)
 
     const { error } = await supabase
       .from('items')
-      .upsert(parks, { onConflict: 'source_id' })
+      .upsert(changed, { onConflict: 'source_id' })
 
     if (error) throw error
 
-    return parks.length
+    return changed.length
   }
 
   return { sync }

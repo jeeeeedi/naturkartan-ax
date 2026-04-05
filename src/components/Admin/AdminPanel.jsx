@@ -19,7 +19,7 @@ export default function AdminPanel({ onLogout, t }) {
     setSyncStatus({ state: 'running', message: 'Startar synkronisering…' })
     try {
       const count = await sync((msg) => setSyncStatus({ state: 'running', message: msg }))
-      setSyncStatus({ state: 'done', message: `${count} leder synkroniserade.` })
+      setSyncStatus({ state: 'done', message: count === 0 ? 'Inga ändringar.' : `${count} leder uppdaterade.` })
       refetch()
     } catch (err) {
       setSyncStatus({ state: 'error', message: `Fel: ${err.message}` })
