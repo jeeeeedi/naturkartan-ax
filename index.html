@@ -1,141 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="sv">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Naturkartan.ax</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-
-  <header id="app-header">
-    <button id="sidebar-toggle" aria-label="Toggle sidebar">
-      <span></span><span></span><span></span>
-    </button>
-    <div id="header-title">
-      <span id="park-icon">&#127754;</span>
-      <div>
-        <span id="park-name">Naturkartan.ax</span>
-        <span id="park-tagline" data-i18n="tagline">Naturreservat &amp; friluftsliv</span>
-      </div>
-    </div>
-    <div id="header-meta" data-i18n="headerMeta">Ålands landskap &bull; Finland</div>
-    <div id="lang-switcher" role="group" aria-label="Language">
-      <button class="lang-btn active" data-lang="sv">SV</button>
-      <button class="lang-btn" data-lang="en">EN</button>
-      <button class="lang-btn" data-lang="fi">FI</button>
-    </div>
-  </header>
-
-  <div id="app-body">
-
-    <aside id="sidebar" aria-label="Park information">
-
-      <section id="park-info">
-        <h2 data-i18n="aboutTitle">Om Åland</h2>
-        <p id="about-text">
-          Åland är ett självstyrande landskap med över 6&thinsp;700 öar. Landskapet erbjuder
-          ett rikt utbud av naturreservat, friluftsområden och historiska parker — från
-          klippiga berg i norr till den skärgård som sträcker sig långt söderut.
-        </p>
-        <ul id="park-stats">
-          <li><span class="stat-icon">&#127754;</span><span><strong>6 700+</strong> <span data-i18n="unitIslands">öar</span></span></li>
-          <li><span class="stat-icon">&#127795;</span><span><strong>74</strong> <span data-i18n="unitParks">parker</span></span></li>
-          <li><span class="stat-icon">&#127960;</span><span><strong>16</strong> <span data-i18n="unitMunicip">kommuner</span></span></li>
-          <li><span class="stat-icon">&#9749;</span><span><span data-i18n="statOpenLabel">Öppet</span> <strong><span data-i18n="unitOpen">året runt</span></strong></span></li>
-        </ul>
-      </section>
-
-      <section id="trail-legend">
-        <h2 data-i18n="parkTypesTitle">Parktyper</h2>
-        <div class="legend-item">
-          <span class="legend-swatch" style="background:#3a7d44"></span>
-          <div>
-            <strong data-i18n="cat_nature_reserve_label">Naturreservat</strong>
-            <span data-i18n="cat_nature_reserve_desc">Skyddad natur och vildmark</span>
-          </div>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch" style="background:#2c6e8a"></span>
-          <div>
-            <strong data-i18n="cat_recreation_label">Friluftsområde</strong>
-            <span data-i18n="cat_recreation_desc">Vandring, cykling och bad</span>
-          </div>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch" style="background:#8a6a2c"></span>
-          <div>
-            <strong data-i18n="cat_historical_label">Historisk plats</strong>
-            <span data-i18n="cat_historical_desc">Kultur och kulturarv</span>
-          </div>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch" style="background:#5a8a7a"></span>
-          <div>
-            <strong data-i18n="cat_bird_sanctuary_label">Fågelstation</strong>
-            <span data-i18n="cat_bird_sanctuary_desc">Ornitologi och ringmärkning</span>
-          </div>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch" style="background:#5a7a2c"></span>
-          <div>
-            <strong data-i18n="cat_city_park_label">Stadspark</strong>
-            <span data-i18n="cat_city_park_desc">Rekreation i stadsmiljö</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="poi-section">
-        <h2 data-i18n="parksTitle">Parker</h2>
-        <div id="category-filters" role="group" aria-label="Filter by type">
-          <!-- Populated by JS -->
-        </div>
-        <div id="poi-search-wrap">
-          <span id="poi-search-icon">&#128269;</span>
-          <input type="text" id="poi-search" placeholder="Sök parker…" aria-label="Search parks" />
-        </div>
-      </section>
-
-      <ul id="poi-list" role="list" aria-label="Parks list">
-        <!-- Populated by JS -->
-      </ul>
-
-      <div id="park-detail" aria-label="Park details" role="region">
-        <!-- Built by JS -->
-      </div>
-
-    </aside>
-
-    <main id="map-container">
-      <div id="map" role="application" aria-label="Interactive parks map"></div>
-
-      <div id="layer-panel" aria-label="Map layer controls">
-        <button id="layer-panel-toggle" aria-expanded="false" aria-controls="layer-panel-body">
-          <span>&#x25A6;</span> <span data-i18n="layerLabel">Lager</span>
-          <span id="layer-panel-chevron">&#9660;</span>
-        </button>
-        <div id="layer-panel-body" hidden>
-          <fieldset>
-            <legend data-i18n="layerTitle">Parktyper</legend>
-            <div id="poi-layer-controls">
-              <!-- Populated by JS -->
-            </div>
-          </fieldset>
-        </div>
-      </div>
-    </main>
-
-  </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="config.js"></script>
-  <script src="parks-data.js"></script>
-  <script src="translations.js"></script>
-  <script src="app.js"></script>
-  <script src="contribute.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Naturkartan.ax — Ålands naturreservat & parker</title>
+    <meta name="description" content="Interaktiv karta över naturreservat, friluftsområden och historiska platser på Åland." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
