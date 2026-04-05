@@ -44,7 +44,7 @@ export default function MapPage() {
           <span /><span /><span />
         </button>
         <div id="header-title">
-          <span id="park-icon">🌊</span>
+          <span id="park-icon" className="icon">nature</span>
           <div>
             <span id="park-name">Naturkartan.ax</span>
             <span id="park-tagline">{t('tagline')}</span>

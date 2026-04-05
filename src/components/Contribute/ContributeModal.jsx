@@ -31,16 +31,16 @@ export default function ContributeModal({ park, categories, onClose, onSubmitted
       const ext = photo.name.split('.').pop()
       const path = `contributions/${Date.now()}.${ext}`
       const { error: uploadError } = await supabase.storage
-        .from('park-photos')
+        .from('item-photos')
         .upload(path, photo, { contentType: photo.type })
       if (!uploadError) {
-        const { data } = supabase.storage.from('park-photos').getPublicUrl(path)
+        const { data } = supabase.storage.from('item-photos').getPublicUrl(path)
         photoUrl = data.publicUrl
       }
     }
 
     const { error: insertError } = await supabase.from('contributions').insert({
-      park_id: park?.id ?? null,
+      item_id: park?.id ?? null,
       type: isNew ? 'new' : 'edit',
       data: {
         name: form.name,

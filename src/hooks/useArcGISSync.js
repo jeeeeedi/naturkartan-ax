@@ -163,7 +163,7 @@ export function useArcGISSync() {
     onProgress(`Skriver ${parks.length} poster till databasen…`)
 
     const { error } = await supabase
-      .from('parks')
+      .from('items')
       .upsert(parks, { onConflict: 'source_id' })
 
     if (error) throw error

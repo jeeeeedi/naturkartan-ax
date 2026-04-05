@@ -19,19 +19,19 @@ export default function ContributionReview({ onApplied, t }) {
 
   async function handleApprove(c) {
     const d = c.data
-    if (c.type === 'edit' && c.park_id) {
-      await supabase.from('parks').update({
+    if (c.type === 'edit' && c.item_id) {
+      await supabase.from('items').update({
         name_sv: d.name,
         category_id: d.category_id,
         municipality: d.municipality,
         area: d.area,
         description_sv: d.description,
         features: d.features,
-      }).eq('id', c.park_id)
+      }).eq('id', c.item_id)
     } else if (c.type === 'new') {
       // New parks need coordinates — skip if missing
       if (d.lat && d.lng) {
-        await supabase.from('parks').insert({
+        await supabase.from('items').insert({
           id: d.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
           name_sv: d.name,
           category_id: d.category_id,
@@ -63,7 +63,7 @@ export default function ContributionReview({ onApplied, t }) {
         <div key={c.id} className="contribution-card">
           <div className="contribution-meta">
             <span className="contribution-type">{c.type}</span>
-            {c.park_id && <span> → {c.park_id}</span>}
+            {c.item_id && <span> → {c.item_id}</span>}
             <span className="contribution-date">{new Date(c.created_at).toLocaleDateString()}</span>
             {c.submitter_name && <span> · {c.submitter_name}</span>}
           </div>

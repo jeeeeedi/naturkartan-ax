@@ -6,7 +6,7 @@ export default function ParkList({ parks, loading, onSelect, onContribute, parkN
   }
 
   return (
-    <ul id="poi-list" role="list" aria-label="Parks list">
+    <ul id="poi-list" role="list" aria-label="Routes list">
       {parks.map(park => (
         <li key={park.id} className="poi-item" role="listitem">
           <button className="poi-item-btn" onClick={() => onSelect(park)}>

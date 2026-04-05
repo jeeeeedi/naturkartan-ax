@@ -43,7 +43,7 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
 
   return (
     <form className="park-form" onSubmit={handleSubmit}>
-      <h2>{park ? t('adminEditPark') : t('adminAddPark')}</h2>
+      <h2>{park ? t('adminEditItem') : t('adminAddItem')}</h2>
 
       {!park && (
         <label>

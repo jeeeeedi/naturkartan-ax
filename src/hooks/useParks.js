@@ -8,7 +8,7 @@ export function useParks() {
 
   useEffect(() => {
     supabase
-      .from('parks')
+      .from('items')
       .select('*, categories(*)')
       .order('name_sv')
       .then(({ data, error }) => {
@@ -21,7 +21,7 @@ export function useParks() {
   const refetch = async () => {
     setLoading(true)
     const { data, error } = await supabase
-      .from('parks')
+      .from('items')
       .select('*, categories(*)')
       .order('name_sv')
     if (!error) setParks(data ?? [])

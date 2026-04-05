@@ -9,6 +9,7 @@ import ContributionReview from './ContributionReview.jsx'
 export default function AdminPanel({ onLogout, t }) {
   const { parks, loading, refetch } = useParks()
   const { categories } = useCategories()
+  const categoryMap = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
   const { sync } = useArcGISSync()
   const [tab, setTab] = useState('parks') // 'parks' | 'contributions'
   const [editing, setEditing] = useState(null) // null = list, 'new' = new form, park = edit form
@@ -18,7 +19,7 @@ export default function AdminPanel({ onLogout, t }) {
     setSyncStatus({ state: 'running', message: 'Startar synkronisering…' })
     try {
       const count = await sync((msg) => setSyncStatus({ state: 'running', message: msg }))
-      setSyncStatus({ state: 'done', message: `✓ ${count} parker synkroniserade.` })
+      setSyncStatus({ state: 'done', message: `${count} leder synkroniserade.` })
       refetch()
     } catch (err) {
       setSyncStatus({ state: 'error', message: `Fel: ${err.message}` })
@@ -27,15 +28,15 @@ export default function AdminPanel({ onLogout, t }) {
 
   async function handleDelete(park) {
     if (!confirm(t('adminDeleteConfirm'))) return
-    await supabase.from('parks').delete().eq('id', park.id)
+    await supabase.from('items').delete().eq('id', park.id)
     refetch()
   }
 
   async function handleSave(data) {
     if (editing === 'new') {
-      await supabase.from('parks').insert(data)
+      await supabase.from('items').insert(data)
     } else {
-      await supabase.from('parks').update(data).eq('id', editing.id)
+      await supabase.from('items').update(data).eq('id', editing.id)
     }
     refetch()
     setEditing(null)
@@ -47,7 +48,7 @@ export default function AdminPanel({ onLogout, t }) {
         <h1>{t('adminTitle')}</h1>
         <nav className="admin-tabs">
           <button className={tab === 'parks' ? 'active' : ''} onClick={() => setTab('parks')}>
-            {t('adminParks')} ({parks.length})
+            {t('adminItems')} ({parks.length})
           </button>
           <button className={tab === 'contributions' ? 'active' : ''} onClick={() => setTab('contributions')}>
             {t('adminContributions')}
@@ -70,14 +71,14 @@ export default function AdminPanel({ onLogout, t }) {
             <div className="parks-list-admin">
               <div className="parks-list-actions">
                 <button className="btn-primary" onClick={() => setEditing('new')}>
-                  + {t('adminAddPark')}
+                  + {t('adminAddItem')}
                 </button>
                 <button
                   className="btn-secondary"
                   onClick={handleArcGISSync}
                   disabled={syncStatus?.state === 'running'}
                 >
-                  🔄 Synka från ArcGIS
+                  <span className="icon" style={{fontSize:'15px',marginRight:'4px'}}>sync</span> Synka från ArcGIS
                 </button>
               </div>
               {syncStatus && (
@@ -91,7 +92,6 @@ export default function AdminPanel({ onLogout, t }) {
                     <tr>
                       <th>Namn</th>
                       <th>Kategori</th>
-                      <th>Kommun</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -99,11 +99,10 @@ export default function AdminPanel({ onLogout, t }) {
                     {parks.map(p => (
                       <tr key={p.id}>
                         <td>{p.name_sv}</td>
-                        <td>{p.category_id}</td>
-                        <td>{p.municipality}</td>
+                        <td>{categoryMap[p.category_id]?.label_sv ?? p.category_id}</td>
                         <td className="admin-row-actions">
-                          <button onClick={() => setEditing(p)}>✏️</button>
-                          <button onClick={() => handleDelete(p)}>🗑️</button>
+                          <button onClick={() => setEditing(p)}><span className="icon">edit</span></button>
+                          <button onClick={() => handleDelete(p)}><span className="icon">delete</span></button>
                         </td>
                       </tr>
                     ))}

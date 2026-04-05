@@ -1,18 +1,22 @@
+import { useTranslation } from 'react-i18next'
+
 export default function ParkDetail({ park, onBack, onContribute, parkName, parkDesc, t }) {
+  const { i18n } = useTranslation()
+  const lang = i18n.language || 'sv'
   const name = parkName(park)
   const desc = parkDesc(park)
   const cat = park.categories
 
   return (
-    <div id="park-detail" aria-label="Park details" role="region">
+    <div id="park-detail" aria-label="Route details" role="region">
       <button className="detail-back-btn" onClick={onBack} aria-label="Back to list">
-        ← {t('parksTitle')}
+        ← {t('adminItems')}
       </button>
 
       <div className="detail-header">
         {cat && (
           <span className="detail-category-badge" style={{ background: cat.color }}>
-            {cat.label_sv}
+            {cat[`label_${lang}`] || cat.label_sv}
           </span>
         )}
         <h2 className="detail-name">{name}</h2>

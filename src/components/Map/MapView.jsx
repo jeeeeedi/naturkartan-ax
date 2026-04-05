@@ -3,21 +3,30 @@ import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-l
 import L from 'leaflet'
 import ParkMarker from './ParkMarker.jsx'
 
-// Small square icon for facility points (parking, toilet, etc.)
+// Small icon for facility points using Material Symbols
 function makeFacilityIcon(typ) {
-  const icons = { 'Parkering': 'P', 'Toalett': 'WC', 'Eldplats': '🔥', 'Vindskydd': '⛺' }
-  const label = icons[typ] ?? '•'
+  const icons = {
+    'Parkering': 'local_parking',
+    'Toalett':   'wc',
+    'Eldplats':  'fireplace',
+    'Vindskydd': 'roofing',
+  }
+  const symbol = icons[typ] ?? 'place'
   return L.divIcon({
     className: '',
     html: `<div style="
-      background:#555;color:#fff;font-size:9px;font-weight:bold;
-      width:18px;height:18px;border-radius:3px;
+      background:#506E66;color:#fff;
+      width:22px;height:22px;border-radius:4px;
       display:flex;align-items:center;justify-content:center;
-      border:1px solid rgba(255,255,255,0.6);
-      white-space:nowrap;
-    ">${label}</div>`,
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
+      border:1.5px solid rgba(255,255,255,0.7);
+      box-shadow:0 1px 4px rgba(0,0,0,0.25);
+    "><span style="
+      font-family:'Material Symbols Outlined';
+      font-size:14px;line-height:1;
+      font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 20;
+    ">${symbol}</span></div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
   })
 }
 
