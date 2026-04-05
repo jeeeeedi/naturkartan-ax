@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { getFacilityMeta } from '../../lib/facilities.js'
 
 export default function ParkDetail({ park, onBack, onContribute, parkName, parkDesc, t }) {
   const { i18n } = useTranslation()
@@ -39,7 +40,10 @@ export default function ParkDetail({ park, onBack, onContribute, parkName, parkD
           <h3>{t('featuresTitle')}</h3>
           <ul className="feature-list">
             {park.features.map(f => (
-              <li key={f} className="feature-tag">{f}</li>
+              <li key={f} className="feature-tag">
+                <span className="icon feature-tag-icon" aria-hidden="true">{getFacilityMeta(f, lang).icon}</span>
+                <span>{getFacilityMeta(f, lang).label}</span>
+              </li>
             ))}
           </ul>
         </div>

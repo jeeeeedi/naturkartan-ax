@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
-import { MapContainer, TileLayer, GeoJSON, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, GeoJSON, Marker, Tooltip, useMap } from 'react-leaflet'
+import { useTranslation } from 'react-i18next'
 import L from 'leaflet'
 import ParkMarker from './ParkMarker.jsx'
+import { getFacilityMeta } from '../../lib/facilities.js'
 
 const userDotIcon = L.divIcon({
   className: '',
@@ -58,28 +60,23 @@ function UserLocation() {
 
 // Small icon for facility points using Material Symbols
 function makeFacilityIcon(typ) {
-  const icons = {
-    'Parkering': 'local_parking',
-    'Toalett':   'wc',
-    'Eldplats':  'fireplace',
-    'Vindskydd': 'roofing',
-  }
-  const symbol = icons[typ] ?? 'place'
+  const { icon, color } = getFacilityMeta(typ)
+
   return L.divIcon({
-    className: '',
+    className: 'facility-marker-icon-wrap',
     html: `<div style="
-      background:#506E66;color:#fff;
-      width:22px;height:22px;border-radius:4px;
+      background:${color};color:#fff;
+      width:24px;height:24px;border-radius:8px;
       display:flex;align-items:center;justify-content:center;
-      border:1.5px solid rgba(255,255,255,0.7);
-      box-shadow:0 1px 4px rgba(0,0,0,0.25);
+      border:1.5px solid rgba(255,255,255,0.85);
+      box-shadow:0 2px 8px rgba(0,0,0,0.3);
     "><span style="
       font-family:'Material Symbols Outlined';
-      font-size:14px;line-height:1;
+      font-size:15px;line-height:1;
       font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 20;
-    ">${symbol}</span></div>`,
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
+    ">${icon}</span></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   })
 }
 
@@ -98,7 +95,14 @@ function FlyController({ flyTo }) {
 }
 
 export default function MapView({ parks, categories, selectedPark, flyTo, onSelectPark, parkName }) {
+  const { i18n } = useTranslation()
+  const lang = i18n.language || 'sv'
+  const [activeFacilityMarker, setActiveFacilityMarker] = useState(null)
   const categoryMap = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
+
+  useEffect(() => {
+    setActiveFacilityMarker(null)
+  }, [selectedPark?.id])
 
   const pathCollection = useMemo(() => {
     const source = selectedPark ? parks.filter(p => p.id === selectedPark.id) : parks
@@ -109,10 +113,10 @@ export default function MapView({ parks, categories, selectedPark, flyTo, onSele
         .map(p => ({
           type: 'Feature',
           geometry: p.path,
-          properties: { id: p.id, category_id: p.category_id },
+          properties: { id: p.id, category_id: p.category_id, name: parkName(p) },
         })),
     }
-  }, [parks, selectedPark])
+  }, [parks, selectedPark, parkName])
 
   return (
     <MapContainer
@@ -137,6 +141,13 @@ export default function MapView({ parks, categories, selectedPark, flyTo, onSele
             return { color, weight: isSelected ? 5 : 3, opacity: isSelected ? 1 : 0.75 }
           }}
           onEachFeature={(feature, layer) => {
+            if (feature.properties?.name) {
+              layer.bindTooltip(feature.properties.name, {
+                sticky: true,
+                direction: 'top',
+                opacity: 0.95,
+              })
+            }
             layer.on('click', () => {
               const park = parks.find(p => p.id === feature.properties.id)
               if (park) onSelectPark(park)
@@ -149,8 +160,13 @@ export default function MapView({ parks, categories, selectedPark, flyTo, onSele
           key={`${selectedPark.id}-fp-${i}`}
           position={[fp.lat, fp.lng]}
           icon={makeFacilityIcon(fp.typ)}
+          title={`${getFacilityMeta(fp.typ, lang).label} - ${parkName(selectedPark)}`}
+          zIndexOffset={activeFacilityMarker === i ? 1600 : 800}
+          eventHandlers={{ click: () => setActiveFacilityMarker(i) }}
         >
-          <Popup>{fp.typ} · {parkName(selectedPark)}</Popup>
+          <Tooltip direction="top" offset={[0, -10]}>
+            {getFacilityMeta(fp.typ, lang).label}
+          </Tooltip>
         </Marker>
       ))}
       {parks.map(park => (
@@ -160,7 +176,7 @@ export default function MapView({ parks, categories, selectedPark, flyTo, onSele
           category={categoryMap[park.category_id]}
           selected={selectedPark?.id === park.id}
           onClick={() => onSelectPark(park)}
-          label={parkName(park)}
+          title={parkName(park)}
         />
       ))}
     </MapContainer>

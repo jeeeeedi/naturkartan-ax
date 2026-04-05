@@ -1,4 +1,4 @@
-import { Marker, Popup } from 'react-leaflet'
+import { Marker, Tooltip } from 'react-leaflet'
 import L from 'leaflet'
 
 function makeIcon(color, selected) {
@@ -18,7 +18,7 @@ function makeIcon(color, selected) {
   })
 }
 
-export default function ParkMarker({ park, category, selected, onClick, label }) {
+export default function ParkMarker({ park, category, selected, onClick, title }) {
   // PostgREST returns geography as WKB hex — use coordinates stored in meta instead
   const lat = park.meta?.lat
   const lng = park.meta?.lng
@@ -31,8 +31,9 @@ export default function ParkMarker({ park, category, selected, onClick, label })
       icon={makeIcon(color, selected)}
       eventHandlers={{ click: onClick }}
       zIndexOffset={selected ? 1000 : 0}
+      title={title}
     >
-      <Popup>{label}</Popup>
+      <Tooltip direction="top" offset={[0, -10]}>{title}</Tooltip>
     </Marker>
   )
 }

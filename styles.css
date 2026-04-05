@@ -452,22 +452,8 @@ body {
 }
 
 /* =========================================================
-   Leaflet Overrides
-   ========================================================= */
-.leaflet-popup-content-wrapper {
-  background: var(--color-cream) !important;
-  color: var(--color-ink) !important;
-  border-radius: 10px !important;
-  border: 1px solid var(--color-border) !important;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.2) !important;
-  font-family: var(--font-sans) !important;
-  padding: 0 !important;
-}
-.leaflet-popup-content { margin: 0 !important; width: auto !important; }
-.leaflet-popup-tip { background: var(--color-cream) !important; }
-.leaflet-popup-close-button { color: var(--color-muted) !important; top: 8px !important; right: 10px !important; font-size: 18px !important; }
-.leaflet-popup-close-button:hover { color: var(--color-ink) !important; }
-
+  Leaflet Overrides
+  ========================================================= */
 .leaflet-control-zoom a {
   background: rgba(55,62,59,0.95) !important;
   color: var(--color-cream) !important;
@@ -481,72 +467,12 @@ body {
 }
 .leaflet-control-attribution a { color: var(--color-forest-mid) !important; }
 
-/* =========================================================
-   Popups
-   ========================================================= */
-.popup-inner {
-  padding: 14px 16px;
-  min-width: 210px;
-  max-width: 270px;
+/* Facility marker hover effect */
+.facility-marker-icon-wrap > div {
+  transition: transform 0.15s ease;
 }
-
-.popup-category-tag {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 5px;
-}
-
-.popup-title {
-  font-family: var(--font-serif);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-ink);
-  margin: 0 0 8px;
-  line-height: 1.25;
-  padding-right: 14px;
-}
-
-.popup-municipality {
-  font-size: 11px;
-  color: var(--color-muted);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.popup-desc {
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--color-ink);
-  margin: 0 0 10px;
-}
-
-.popup-features {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 0;
-}
-.popup-features li {
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: var(--color-border);
-  color: var(--color-ink);
-  white-space: nowrap;
-}
-
-.popup-poi-header {
-  padding-left: 10px;
-  margin-bottom: 8px;
-  display: flex;
-  flex-direction: column;
+.facility-marker-icon-wrap > div:hover {
+  transform: scale(1.08);
 }
 
 /* =========================================================
@@ -1208,9 +1134,20 @@ body.detail-open #park-detail { display: flex; }
 .detail-features h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--color-muted); margin-bottom: 6px; }
 .feature-list { display: flex; flex-wrap: wrap; gap: 4px; list-style: none; }
 .feature-tag {
-  background: var(--color-border);
-  border: 1px solid rgba(55,62,59,0.1);
-  border-radius: 12px; padding: 2px 10px; font-size: 11px; color: var(--color-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #e9efe8;
+  border: 1px solid rgba(55,62,59,0.12);
+  border-radius: 14px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: var(--color-ink);
+}
+
+.feature-tag-icon {
+  font-size: 13px;
+  color: var(--color-forest-mid);
 }
 .detail-actions { padding: 8px 16px 16px; }
 .btn-contribute {
