@@ -27,8 +27,7 @@ export default function MapPage() {
     if (filterCategory && p.category_id !== filterCategory) return false
     if (search) {
       const q = search.toLowerCase()
-      return parkName(p).toLowerCase().includes(q) ||
-        (p.municipality || '').toLowerCase().includes(q)
+      return parkName(p).toLowerCase().includes(q)
     }
     return true
   })

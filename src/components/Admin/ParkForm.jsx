@@ -7,7 +7,6 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
     name_en: park?.name_en ?? '',
     name_fi: park?.name_fi ?? '',
     category_id: park?.category_id ?? categories[0]?.id ?? '',
-    municipality: park?.municipality ?? '',
     area: park?.area ?? '',
     description_sv: park?.description_sv ?? '',
     description_en: park?.description_en ?? '',
@@ -29,7 +28,6 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
       name_en: form.name_en || null,
       name_fi: form.name_fi || null,
       category_id: form.category_id,
-      municipality: form.municipality || null,
       area: form.area || null,
       description_sv: form.description_sv || '',
       description_en: form.description_en || '',
@@ -65,7 +63,6 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
             {categories.map(c => <option key={c.id} value={c.id}>{c.label_sv}</option>)}
           </select>
         </label>
-        <label>{t('cfMunicipality')}<input value={form.municipality} onChange={set('municipality')} /></label>
         <label>{t('cfArea')}<input value={form.area} onChange={set('area')} /></label>
       </div>
 

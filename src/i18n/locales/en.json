@@ -19,7 +19,7 @@
   "cfMunicipality": "Municipality",
   "cfArea": "Area",
   "cfDescription": "Description",
-  "cfFeatures": "Features (comma-separated)",
+  "cfFeatures": "Facilities (comma-separated)",
   "cfPickOnMap": "Pick on map",
   "cfPickHint": "Click the map. The form will reopen automatically.",
   "cfPickBanner": "Click the map to pick a location",
@@ -57,5 +57,8 @@
   "pendingContributions": "Pending contributions",
   "approve": "Approve",
   "reject": "Reject",
-  "noContributions": "No pending contributions."
+  "noContributions": "No pending contributions.",
+  "communityUpdatesTitle": "Community updates",
+  "communityUpdateBy": "Contribution by",
+  "communityAnonymous": "Anonymous"
 }

@@ -57,5 +57,8 @@
   "pendingContributions": "Odottavat ehdotukset",
   "approve": "Hyväksy",
   "reject": "Hylkää",
-  "noContributions": "Ei odottavia ehdotuksia."
+  "noContributions": "Ei odottavia ehdotuksia.",
+  "communityUpdatesTitle": "Yhteisön päivitykset",
+  "communityUpdateBy": "Ehdottaja",
+  "communityAnonymous": "Anonyymi"
 }

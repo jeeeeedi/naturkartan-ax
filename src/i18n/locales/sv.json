@@ -57,5 +57,8 @@
   "pendingContributions": "Väntande bidrag",
   "approve": "Godkänn",
   "reject": "Avvisa",
-  "noContributions": "Inga väntande bidrag."
+  "noContributions": "Inga väntande bidrag.",
+  "communityUpdatesTitle": "Community-uppdateringar",
+  "communityUpdateBy": "Bidrag av",
+  "communityAnonymous": "Anonym"
 }

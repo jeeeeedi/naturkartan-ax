@@ -6,7 +6,6 @@ export default function ContributeModal({ park, categories, onClose, onSubmitted
   const [form, setForm] = useState({
     name: park ? parkName(park) : '',
     category_id: park?.category_id ?? categories[0]?.id ?? '',
-    municipality: park?.municipality ?? '',
     area: park?.area ?? '',
     description: '',
     features: park?.features?.join(', ') ?? '',
@@ -45,7 +44,6 @@ export default function ContributeModal({ park, categories, onClose, onSubmitted
       data: {
         name: form.name,
         category_id: form.category_id,
-        municipality: form.municipality,
         area: form.area,
         description: form.description,
         features: form.features.split(',').map(f => f.trim()).filter(Boolean),
@@ -85,10 +83,6 @@ export default function ContributeModal({ park, categories, onClose, onSubmitted
                   <option key={c.id} value={c.id}>{c.label_sv}</option>
                 ))}
               </select>
-            </label>
-            <label>
-              {t('cfMunicipality')}
-              <input value={form.municipality} onChange={set('municipality')} />
             </label>
             <label>
               {t('cfArea')}

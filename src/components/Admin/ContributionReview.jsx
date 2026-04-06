@@ -20,14 +20,34 @@ export default function ContributionReview({ onApplied, t }) {
   async function handleApprove(c) {
     const d = c.data
     if (c.type === 'edit' && c.item_id) {
-      await supabase.from('items').update({
-        name_sv: d.name,
-        category_id: d.category_id,
-        municipality: d.municipality,
-        area: d.area,
-        description_sv: d.description,
-        features: d.features,
-      }).eq('id', c.item_id)
+      const { data: item } = await supabase
+        .from('items')
+        .select('id, source_id')
+        .eq('id', c.item_id)
+        .single()
+
+      if (item?.source_id) {
+        await supabase
+          .from('item_community_edits')
+          .insert({
+            item_id: c.item_id,
+            contribution_id: c.id,
+            submitter_name: c.submitter_name ?? null,
+            note: c.note ?? null,
+            photo_url: c.photo_url ?? null,
+            data: d,
+            created_at: c.created_at,
+            approved_at: new Date().toISOString(),
+          })
+      } else {
+        await supabase.from('items').update({
+          name_sv: d.name,
+          category_id: d.category_id,
+          area: d.area,
+          description_sv: d.description,
+          features: d.features,
+        }).eq('id', c.item_id)
+      }
     } else if (c.type === 'new') {
       // New parks need coordinates — skip if missing
       if (d.lat && d.lng) {
@@ -35,7 +55,6 @@ export default function ContributionReview({ onApplied, t }) {
           id: d.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
           name_sv: d.name,
           category_id: d.category_id,
-          municipality: d.municipality,
           area: d.area,
           description_sv: d.description,
           features: d.features,
