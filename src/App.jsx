@@ -4,7 +4,7 @@ import AdminPage from './components/Admin/AdminPage.jsx'
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/naturkartan-ax">
       <Routes>
         <Route path="/" element={<MapPage />} />
         <Route path="/admin/*" element={<AdminPage />} />
