@@ -5,24 +5,25 @@ import { useArcGISSync } from '../../hooks/useArcGISSync.js'
 import { supabase } from '../../lib/supabase.js'
 import ParkForm from './ParkForm.jsx'
 import ContributionReview from './ContributionReview.jsx'
+import ContactMessagesReview from './ContactMessagesReview.jsx'
 
 export default function AdminPanel({ onLogout, t }) {
   const { parks, loading, refetch } = useParks()
   const { categories } = useCategories()
   const categoryMap = Object.fromEntries((categories ?? []).map(c => [c.id, c]))
   const { sync } = useArcGISSync()
-  const [tab, setTab] = useState('parks') // 'parks' | 'contributions'
+  const [tab, setTab] = useState('parks') // 'parks' | 'contributions' | 'contacts'
   const [editing, setEditing] = useState(null) // null = list, 'new' = new form, park = edit form
   const [syncStatus, setSyncStatus] = useState(null) // null | { state: 'running'|'done'|'error', message }
 
   async function handleArcGISSync() {
-    setSyncStatus({ state: 'running', message: 'Startar synkronisering…' })
+    setSyncStatus({ state: 'running', message: 'Starting synchronization...' })
     try {
       const count = await sync((msg) => setSyncStatus({ state: 'running', message: msg }))
-      setSyncStatus({ state: 'done', message: count === 0 ? 'Inga ändringar.' : `${count} leder uppdaterade.` })
+      setSyncStatus({ state: 'done', message: count === 0 ? 'No changes found.' : `${count} routes updated.` })
       refetch()
     } catch (err) {
-      setSyncStatus({ state: 'error', message: `Fel: ${err.message}` })
+      setSyncStatus({ state: 'error', message: `Error: ${err.message}` })
     }
   }
 
@@ -53,6 +54,9 @@ export default function AdminPanel({ onLogout, t }) {
           <button className={tab === 'contributions' ? 'active' : ''} onClick={() => setTab('contributions')}>
             {t('adminContributions')}
           </button>
+          <button className={tab === 'contacts' ? 'active' : ''} onClick={() => setTab('contacts')}>
+            {t('adminContacts')}
+          </button>
         </nav>
         <button className="btn-secondary admin-logout" onClick={onLogout}>{t('adminLogout')}</button>
       </header>
@@ -78,7 +82,7 @@ export default function AdminPanel({ onLogout, t }) {
                   onClick={handleArcGISSync}
                   disabled={syncStatus?.state === 'running'}
                 >
-                  <span className="icon" style={{fontSize:'15px',marginRight:'4px'}}>sync</span> Synka från ArcGIS
+                  <span className="icon" style={{fontSize:'15px',marginRight:'4px'}}>sync</span> Sync from ArcGIS
                 </button>
               </div>
               {syncStatus && (
@@ -90,8 +94,8 @@ export default function AdminPanel({ onLogout, t }) {
                 <table className="admin-table">
                   <thead>
                     <tr>
-                      <th>Namn</th>
-                      <th>Kategori</th>
+                      <th>Name</th>
+                      <th>Category</th>
                       <th></th>
                     </tr>
                   </thead>
@@ -115,6 +119,10 @@ export default function AdminPanel({ onLogout, t }) {
 
         {tab === 'contributions' && (
           <ContributionReview onApplied={refetch} t={t} />
+        )}
+
+        {tab === 'contacts' && (
+          <ContactMessagesReview t={t} />
         )}
       </div>
     </div>

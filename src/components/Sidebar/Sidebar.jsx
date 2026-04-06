@@ -1,12 +1,15 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ParkList from './ParkList.jsx'
 import ParkDetail from './ParkDetail.jsx'
+import AboutContact from './AboutContact.jsx'
 
 export default function Sidebar({
   open, parks, categories, loading, selectedPark,
   filterCategory, search, onSelectPark, onClearPark, onFilterCategory,
   onSearch, onContribute, parkName, parkDesc, t,
 }) {
+  const [aboutOpen, setAboutOpen] = useState(false)
   const { i18n } = useTranslation()
   const lang = i18n.language || 'sv'
   const catLabel = (cat) => cat[`label_${lang}`] || cat.label_sv
@@ -75,7 +78,25 @@ export default function Sidebar({
         {' · '}
         Geodata: <a href="https://www.kartor.ax/" target="_blank" rel="noopener">Ålands landskapsregering</a>{' '}
         <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>
+        <button
+          type="button"
+          className="sidebar-info-btn"
+          onClick={() => setAboutOpen(true)}
+          aria-label={t('aboutOpenModal')}
+          title={t('aboutOpenModal')}
+        >
+          <span className="icon">info_i</span>
+        </button>
       </footer>
+
+      {aboutOpen && (
+        <div className="modal-overlay" role="dialog" aria-modal="true" onClick={() => setAboutOpen(false)}>
+          <div className="modal-box about-modal-box" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setAboutOpen(false)} aria-label={t('cfClose')}>×</button>
+            <AboutContact t={t} />
+          </div>
+        </div>
+      )}
     </aside>
   )
 }

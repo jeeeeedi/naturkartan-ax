@@ -51,9 +51,9 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
       )}
 
       <div className="form-row">
-        <label>Namn (SV) *<input value={form.name_sv} onChange={set('name_sv')} required /></label>
+        <label>Name (SV) *<input value={form.name_sv} onChange={set('name_sv')} required /></label>
         <label>Name (EN)<input value={form.name_en} onChange={set('name_en')} /></label>
-        <label>Nimi (FI)<input value={form.name_fi} onChange={set('name_fi')} /></label>
+        <label>Name (FI)<input value={form.name_fi} onChange={set('name_fi')} /></label>
       </div>
 
       <div className="form-row">
@@ -71,9 +71,9 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
         <label>Lng *<input type="number" step="any" value={form.lng} onChange={set('lng')} required /></label>
       </div>
 
-      <label>Beskrivning (SV)<textarea value={form.description_sv} onChange={set('description_sv')} rows={3} /></label>
+      <label>Description (SV)<textarea value={form.description_sv} onChange={set('description_sv')} rows={3} /></label>
       <label>Description (EN)<textarea value={form.description_en} onChange={set('description_en')} rows={3} /></label>
-      <label>Kuvaus (FI)<textarea value={form.description_fi} onChange={set('description_fi')} rows={3} /></label>
+      <label>Description (FI)<textarea value={form.description_fi} onChange={set('description_fi')} rows={3} /></label>
 
       <label>{t('cfFeatures')}<input value={form.features} onChange={set('features')} /></label>
 
