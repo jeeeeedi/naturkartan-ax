@@ -12,7 +12,6 @@ export default function ContributeModal({ park, categories, onClose, onSubmitted
   })
   const [authorName, setAuthorName] = useState('')
   const [note, setNote] = useState('')
-  const [photo, setPhoto] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
@@ -24,19 +23,6 @@ export default function ContributeModal({ park, categories, onClose, onSubmitted
     if (!form.name.trim()) { setError(t('cfErrorName')); return }
     setError('')
     setUploading(true)
-
-    let photoUrl = null
-    if (photo) {
-      const ext = photo.name.split('.').pop()
-      const path = `contributions/${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage
-        .from('item-photos')
-        .upload(path, photo, { contentType: photo.type })
-      if (!uploadError) {
-        const { data } = supabase.storage.from('item-photos').getPublicUrl(path)
-        photoUrl = data.publicUrl
-      }
-    }
 
     const { error: insertError } = await supabase.from('contributions').insert({
       item_id: park?.id ?? null,
@@ -50,7 +36,7 @@ export default function ContributeModal({ park, categories, onClose, onSubmitted
       },
       submitter_name: authorName || null,
       note: note || null,
-      photo_url: photoUrl,
+      photo_url: null,
     })
 
     setUploading(false)
@@ -103,15 +89,6 @@ export default function ContributeModal({ park, categories, onClose, onSubmitted
             <label>
               {t('cfNote')}
               <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} />
-            </label>
-            <label>
-              {t('cfPhoto')}
-              <span className="file-note">{t('cfPhotoNote')}</span>
-              <input
-                type="file"
-                accept="image/jpeg,image/png"
-                onChange={e => setPhoto(e.target.files[0] ?? null)}
-              />
             </label>
             {error && <p className="form-error">{error}</p>}
             <div className="form-actions">
