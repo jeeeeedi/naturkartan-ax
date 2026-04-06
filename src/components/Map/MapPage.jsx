@@ -5,6 +5,7 @@ import { useCategories } from '../../hooks/useCategories.js'
 import MapView from './MapView.jsx'
 import Sidebar from '../Sidebar/Sidebar.jsx'
 import ContributeModal from '../Contribute/ContributeModal.jsx'
+import ContributeTrailModal from '../Contribute/ContributeTrailModal.jsx'
 
 export default function MapPage() {
   const { t, i18n } = useTranslation()
@@ -95,7 +96,15 @@ export default function MapPage() {
         </main>
       </div>
 
-      {contributeOpen && (
+      {contributeOpen && contributeTarget === null && (
+        <ContributeTrailModal
+          categories={categories}
+          onClose={() => setContributeOpen(false)}
+          onSubmitted={() => { refetch(); setContributeOpen(false) }}
+          t={t}
+        />
+      )}
+      {contributeOpen && contributeTarget !== null && (
         <ContributeModal
           park={contributeTarget}
           categories={categories}

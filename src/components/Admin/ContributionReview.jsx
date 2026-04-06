@@ -1,5 +1,45 @@
 import { useState, useEffect } from 'react'
+import { MapContainer, TileLayer, GeoJSON, Marker, Tooltip } from 'react-leaflet'
+import L from 'leaflet'
 import { supabase } from '../../lib/supabase.js'
+import { getFacilityMeta } from '../../lib/facilities.js'
+
+function pathBounds(path) {
+  const lats = path.coordinates.map(c => c[1])
+  const lngs = path.coordinates.map(c => c[0])
+  return [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]]
+}
+
+function makeFacilityIcon(typ) {
+  const { icon, color } = getFacilityMeta(typ)
+  return L.divIcon({
+    className: 'facility-marker-icon-wrap',
+    html: `<div style="background:${color};color:#fff;width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,0.85);box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="font-family:'Material Symbols Outlined';font-size:15px;line-height:1;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 20">${icon}</span></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  })
+}
+
+function TrailPreviewMap({ path, facilityPoints }) {
+  return (
+    <MapContainer
+      key="preview"
+      bounds={pathBounds(path)}
+      style={{ height: '220px', marginTop: '0.75rem', borderRadius: '6px' }}
+      scrollWheelZoom={false}
+      zoomControl={false}
+      attributionControl={false}
+    >
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <GeoJSON data={path} style={{ color: '#3a7d44', weight: 3 }} />
+      {(facilityPoints ?? []).map((fp, i) => (
+        <Marker key={i} position={[fp.lat, fp.lng]} icon={makeFacilityIcon(fp.typ)}>
+          <Tooltip direction="top" offset={[0, -10]}>{fp.typ}</Tooltip>
+        </Marker>
+      ))}
+    </MapContainer>
+  )
+}
 
 export default function ContributionReview({ onApplied, t }) {
   const [contributions, setContributions] = useState([])
@@ -48,20 +88,30 @@ export default function ContributionReview({ onApplied, t }) {
           features: d.features,
         }).eq('id', c.item_id)
       }
-    } else if (c.type === 'new') {
-      // New parks need coordinates — skip if missing
-      if (d.lat && d.lng) {
-        await supabase.from('items').insert({
-          id: d.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-          name_sv: d.name,
-          category_id: d.category_id,
-          area: d.area,
-          description_sv: d.description,
-          features: d.features,
-          location: `SRID=4326;POINT(${d.lng} ${d.lat})`,
-        })
+    } else if (c.type === 'new' && d.path) {
+      // Trail contribution — derive marker location from path midpoint
+      const coords = d.path.coordinates
+      const mid = coords[Math.floor(coords.length / 2)]
+      const [lng, lat] = mid
+
+      const meta = {}
+      if ((d.facility_points ?? []).length > 0) {
+        meta.facility_points = d.facility_points
       }
+
+      await supabase.from('items').insert({
+        id: d.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        name_sv: d.name,
+        category_id: d.category_id,
+        area: d.area || null,
+        description_sv: d.description || '',
+        features: (d.facility_points ?? []).map(fp => fp.typ),
+        location: `SRID=4326;POINT(${lng} ${lat})`,
+        path: d.path,
+        meta,
+      })
     }
+
     await supabase.from('contributions').update({ status: 'approved' }).eq('id', c.id)
     onApplied()
     load()
@@ -86,10 +136,10 @@ export default function ContributionReview({ onApplied, t }) {
             <span className="contribution-date">{new Date(c.created_at).toLocaleDateString()}</span>
             {c.submitter_name && <span> · {c.submitter_name}</span>}
           </div>
-          <pre className="contribution-data">{JSON.stringify(c.data, null, 2)}</pre>
+          <pre className="contribution-data">{JSON.stringify({ ...c.data, path: c.data.path ? `[LineString, ${c.data.path.coordinates?.length} pts]` : undefined }, null, 2)}</pre>
           {c.note && <p className="contribution-note">"{c.note}"</p>}
-          {c.photo_url && (
-            <img src={c.photo_url} alt="Contribution photo" className="contribution-photo" />
+          {c.data.path && (
+            <TrailPreviewMap path={c.data.path} facilityPoints={c.data.facility_points} />
           )}
           <div className="form-actions">
             <button className="btn-primary" onClick={() => handleApprove(c)}>{t('approve')}</button>
