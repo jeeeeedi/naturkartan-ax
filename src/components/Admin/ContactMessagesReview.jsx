@@ -46,7 +46,7 @@ export default function ContactMessagesReview({ t }) {
           <p className="contact-msg-body">{m.message}</p>
 
           <div className="form-actions">
-            {m.status !== 'read' && (
+            {m.status === 'new' && (
               <button className="btn-secondary" onClick={() => setStatus(m.id, 'read')}>
                 {t('adminMarkRead')}
               </button>

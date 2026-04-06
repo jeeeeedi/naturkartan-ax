@@ -74,8 +74,7 @@ export default function Sidebar({
         />
       )}
       <footer className="sidebar-attribution">
-        <a href="https://www.regeringen.ax/miljo-natur/allemansratten" target="_blank" rel="noopener">Allemansrätten</a>
-        {' · '}
+        <a href="https://www.regeringen.ax/miljo-natur/allemansratten" target="_blank" rel="noopener">Allemansrätten</a><br />
         Geodata: <a href="https://www.kartor.ax/" target="_blank" rel="noopener">Ålands landskapsregering</a>{' '}
         <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>
         <button
