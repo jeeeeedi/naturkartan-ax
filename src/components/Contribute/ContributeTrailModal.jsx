@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet'
 import { supabase } from '../../lib/supabase.js'
+import { listFacilityTypes } from '../../lib/facilities.js'
+import { useFormFields } from '../../hooks/useFormFields.js'
+import Modal from '../Modal.jsx'
 
-const FACILITY_TYPES = [
-  'Parkering', 'Toalett', 'Eldplats', 'Rastplats',
-  'Badplats', 'Hamn', 'Utsiktstorn', 'Infoskylt', 'Fotoplats',
-]
+const FACILITY_TYPES = listFacilityTypes()
 
 function parseGpx(text) {
   const doc = new DOMParser().parseFromString(text, 'application/xml')
@@ -25,7 +25,7 @@ function pathBounds(path) {
 }
 
 export default function ContributeTrailModal({ categories, onClose, onSubmitted, t }) {
-  const [form, setForm] = useState({
+  const { form, set } = useFormFields({
     name: '',
     category_id: categories[0]?.id ?? '',
     area: '',
@@ -39,8 +39,6 @@ export default function ContributeTrailModal({ categories, onClose, onSubmitted,
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
-
-  const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }))
 
   function handleGpxChange(e) {
     const file = e.target.files[0]
@@ -108,21 +106,18 @@ export default function ContributeTrailModal({ categories, onClose, onSubmitted,
   }
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true">
-      <div className="modal-box">
-        <button className="modal-close" onClick={onClose} aria-label={t('cfClose')}>×</button>
-        <h2>{t('cfAddTrail')}</h2>
-
-        {submitted ? (
-          <div className="contribute-success">
-            <p>{t('cfSuccessMsg')}</p>
-            <button className="btn-primary" onClick={onClose}>{t('cfClose')}</button>
-          </div>
-        ) : (
+    <Modal onClose={onClose} t={t}>
+      <h2>{t('cfAddTrail')}</h2>
+      {submitted ? (
+        <div className="contribute-success">
+          <p>{t('cfSuccessMsg')}</p>
+          <button className="btn-primary" onClick={onClose}>{t('cfClose')}</button>
+        </div>
+      ) : (
           <form onSubmit={handleSubmit} noValidate>
             <label>
               {t('cfName')} *
-              <input value={form.name} onChange={set('name')} required />
+              <input value={form.name} onChange={set('name')} required maxLength={255} />
             </label>
             <label>
               {t('cfCategory')}
@@ -134,11 +129,11 @@ export default function ContributeTrailModal({ categories, onClose, onSubmitted,
             </label>
             <label>
               {t('cfArea')}
-              <input value={form.area} onChange={set('area')} placeholder="t.ex. 3–5 km" />
+              <input value={form.area} onChange={set('area')} placeholder="t.ex. 3–5 km" maxLength={100} />
             </label>
             <label>
               {t('cfDescription')}
-              <textarea value={form.description} onChange={set('description')} rows={3} />
+              <textarea value={form.description} onChange={set('description')} rows={3} maxLength={2000} />
             </label>
 
             <fieldset className="contribute-fieldset">
@@ -196,7 +191,7 @@ export default function ContributeTrailModal({ categories, onClose, onSubmitted,
             </label>
             <label>
               {t('cfNote')}
-              <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} />
+              <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} maxLength={1000} />
             </label>
 
             {error && <p className="form-error">{error}</p>}
@@ -210,7 +205,6 @@ export default function ContributeTrailModal({ categories, onClose, onSubmitted,
             </div>
           </form>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }

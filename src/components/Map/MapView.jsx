@@ -3,7 +3,9 @@ import { MapContainer, TileLayer, GeoJSON, Marker, Tooltip, useMap } from 'react
 import { useTranslation } from 'react-i18next'
 import L from 'leaflet'
 import ParkMarker from './ParkMarker.jsx'
+import { makeFacilityIcon } from '../../lib/iconUtils.js'
 import { getFacilityMeta } from '../../lib/facilities.js'
+import { DEFAULT_CATEGORY_COLOR } from '../../lib/constants.js'
 
 const userDotIcon = L.divIcon({
   className: '',
@@ -58,27 +60,6 @@ function UserLocation() {
   )
 }
 
-// Small icon for facility points using Material Symbols
-function makeFacilityIcon(typ) {
-  const { icon, color } = getFacilityMeta(typ)
-
-  return L.divIcon({
-    className: 'facility-marker-icon-wrap',
-    html: `<div style="
-      background:${color};color:#fff;
-      width:24px;height:24px;border-radius:8px;
-      display:flex;align-items:center;justify-content:center;
-      border:1.5px solid rgba(255,255,255,0.85);
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);
-    "><span style="
-      font-family:'Material Symbols Outlined';
-      font-size:15px;line-height:1;
-      font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 20;
-    ">${icon}</span></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  })
-}
 
 const ALAND_CENTER = [60.18, 20.0]
 const ALAND_ZOOM = 9
@@ -136,7 +117,7 @@ export default function MapView({ parks, categories, selectedPark, flyTo, onSele
           key={pathCollection.features.map(f => f.properties.id).join(',')}
           data={pathCollection}
           style={(feature) => {
-            const color = categoryMap[feature.properties.category_id]?.color ?? '#888'
+            const color = categoryMap[feature.properties.category_id]?.color ?? DEFAULT_CATEGORY_COLOR
             const isSelected = selectedPark?.id === feature.properties.id
             return { color, weight: isSelected ? 5 : 3, opacity: isSelected ? 1 : 0.75 }
           }}

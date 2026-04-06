@@ -1,121 +1,113 @@
 # Naturkartan.ax
 
-Interactive map for parks and outdoor areas in Aland, built as a static web app.
+Interactive map of hiking trails and cycling routes across the Åland Islands, built with React and Supabase.
 
-## Overview
+## Features
 
-Naturkartan.ax includes:
-
-- Interactive Leaflet map with park markers.
-- Park list, category filters, and search.
-- UI translations (SV, EN, FI).
-- User contribution flow for suggesting edits and new parks.
-- Local admin interface for reviewing and maintaining park data.
-- GitHub Pages deployment with GitHub Actions.
+- Interactive Leaflet map with trail route lines and facility markers
+- Trail list with category filters and search
+- Park/trail detail view with community-submitted edits
+- User contribution flow — suggest edits to existing trails or submit new ones via GPX upload
+- Admin interface for reviewing contributions, managing trails, and syncing from ArcGIS
+- UI translations: Swedish, English, Finnish
+- ArcGIS sync for automatic trail data updates from Ålands landskapsregering
 
 ## Tech Stack
 
-- HTML, CSS, vanilla JavaScript.
-- Leaflet for maps.
-- OpenStreetMap tiles.
-- localStorage for local persistence.
-- ImgBB API for optional photo upload in contributions.
+- **Frontend:** React 19, Vite
+- **Maps:** Leaflet / react-leaflet, OpenStreetMap tiles
+- **Backend:** Supabase (Postgres + PostGIS, Row Level Security, Auth)
+- **i18n:** i18next / react-i18next
 
-## Project Files
+## Project Structure
 
-- `index.html`: Main map app entry page.
-- `app.js`: Core map logic, markers, filters, i18n rendering.
-- `parks-data.js`: Default parks dataset and category config.
-- `translations.js`: UI and content translations.
-- `contribute.js`: Contribution modal and submission handling.
-- `admin.html`: Admin page for editing parks/contributions.
-- `admin.js`: Admin logic and local data management.
-- `styles.css`: Main styling.
-- `config.example.js`: Template for local configuration.
-- `config.js`: Local config (gitignored).
+```
+src/
+  components/
+    Admin/          # Admin panel, contribution review, park form, contact messages
+    Contribute/     # ContributeModal (edit existing), ContributeTrailModal (add new via GPX)
+    Map/            # MapView, ParkMarker
+    Sidebar/        # Sidebar, ParkList, ParkDetail, AboutContact
+  hooks/
+    useParks.js
+    useCategories.js
+    useArcGISSync.js
+    useFormFields.js
+  lib/
+    supabase.js
+    facilities.js   # Facility type metadata (icons, colors, labels)
+    iconUtils.js    # Shared Leaflet icon factories
+    constants.js
+supabase/
+  migrations/       # All schema migrations (001–007)
+styles.css
+```
 
 ## Local Development
 
-### 1. Configure local API key
-
-Copy the example config:
+### 1. Install dependencies
 
 ```bash
-cp config.example.js config.js
+npm install
 ```
 
-Then set your ImgBB API key in `config.js`:
+### 2. Configure environment
 
-```js
-window.ALAND_CONFIG = {
-	imgbbApiKey: 'YOUR_IMGBB_API_KEY',
-};
+Create a `.env.local` file:
+
+```
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Notes:
-
-- `config.js` is gitignored and should never be committed.
-- If no valid key is present, photo upload is skipped.
-
-### 2. Serve locally
-
-Any static server works. Example with Node:
+### 3. Run dev server
 
 ```bash
-npx serve .
+npm run dev
 ```
 
-Then open the local URL shown in terminal.
+## Database
 
-## Data Model and Persistence
+Managed via Supabase. Migrations are in `supabase/migrations/` and should be run in order.
 
-- Default parks are loaded from `parks-data.js`.
-- Admin edits are saved to localStorage key `aland_parks`.
-- User contributions are stored in localStorage key `aland_contributions`.
-- Selected language is stored in localStorage key `aland_lang`.
+Key tables:
 
-Because persistence is browser-local, data does not automatically sync between devices.
+| Table | Description |
+|---|---|
+| `items` | Trails and routes (ArcGIS-synced + user-contributed) |
+| `categories` | Trail types (hiking, cycling) with colors |
+| `contributions` | Pending user submissions — edits and new trails |
+| `item_community_edits` | Approved edits to ArcGIS-synced trails |
+| `contact_messages` | Messages submitted via the about/contact form |
 
-## Admin Workflow
+Row Level Security is enabled on all tables. Public users can read items and insert contributions. All writes to `items` require admin role.
 
-1. Open `admin.html` in the browser.
-2. Add, edit, reposition, or delete parks.
-3. Changes are saved to localStorage.
-4. Review contributions and apply accepted changes.
+## Contribution Flow
 
-If needed, export or copy data from admin tools and commit curated updates to `parks-data.js`.
+**Editing an existing trail:** "Suggest an edit" on any trail opens a form. Submitted data is stored in `contributions` and reviewed by an admin.
 
-## GitHub Pages Deployment
+**Adding a new trail:**
+1. User clicks "+ Add a missing place"
+2. Fills in name, category, description
+3. Uploads a `.gpx` file — the route is previewed on a map
+4. Optionally adds facility locations (parking, toilets, etc.) by pasting `lat, lng` coordinates
+5. On admin approval, the trail is inserted into `items` with its route geometry and facility pins
 
-This repository includes a deploy workflow at `.github/workflows/deploy.yml`.
+## Admin
 
-### Required setup
+Navigate to `/admin`. Requires a Supabase user listed in the `admins` table.
 
-1. Push this project to a GitHub repository.
-2. In repository settings, add secret:
-	 - Name: `IMGBB_API_KEY`
-	 - Value: your ImgBB API key
-3. In Settings -> Pages, set Source to `GitHub Actions`.
+- **Routes tab:** add, edit, or delete trails; trigger ArcGIS sync
+- **Contributions tab:** review pending submissions with route map preview; approve or reject
+- **Contacts tab:** read and archive contact form messages
 
-### Deploy behavior
+## ArcGIS Sync
 
-- Workflow runs on push to `main`.
-- It writes `config.js` from the repository secret.
-- It uploads the site and deploys to GitHub Pages.
+Trail data is sourced from Ålands landskapsregering FeatureServer APIs. The sync hook (`useArcGISSync`) fetches hiking trails, cycling routes, and facility points, then upserts changed records using `content_hash` deduplication.
 
-Site URL format:
+## Build & Deploy
 
-```text
-https://<github-username>.github.io/<repository-name>/
+```bash
+npm run build   # outputs to dist/
+npm run preview # preview production build locally
 ```
-
-## Troubleshooting
-
-- Deployment fails: check Actions logs for `Deploy to GitHub Pages`.
-- Site 404: confirm Pages source is set to `GitHub Actions`.
-- Upload errors: verify `IMGBB_API_KEY` secret value is valid.
-- Local changes not visible: hard refresh browser cache.
-
-## License
-
-Add your preferred license information here.

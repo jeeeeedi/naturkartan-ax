@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { useFormFields } from '../../hooks/useFormFields.js'
 
 export default function ParkForm({ park, categories, onSave, onCancel, t }) {
-  const [form, setForm] = useState({
+  const { form, set } = useFormFields({
     id: park?.id ?? '',
     name_sv: park?.name_sv ?? '',
     name_en: park?.name_en ?? '',
@@ -17,10 +18,14 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
   })
   const [saving, setSaving] = useState(false)
 
-  const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }))
-
   async function handleSubmit(e) {
     e.preventDefault()
+    const lat = parseFloat(form.lat)
+    const lng = parseFloat(form.lng)
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      alert('Invalid coordinates')
+      return
+    }
     setSaving(true)
     const payload = {
       id: form.id,
@@ -33,7 +38,7 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
       description_en: form.description_en || '',
       description_fi: form.description_fi || '',
       features: form.features.split(',').map(f => f.trim()).filter(Boolean),
-      location: `SRID=4326;POINT(${form.lng} ${form.lat})`,
+      location: `SRID=4326;POINT(${lng} ${lat})`,
     }
     await onSave(payload)
     setSaving(false)
@@ -51,9 +56,9 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
       )}
 
       <div className="form-row">
-        <label>Name (SV) *<input value={form.name_sv} onChange={set('name_sv')} required /></label>
-        <label>Name (EN)<input value={form.name_en} onChange={set('name_en')} /></label>
-        <label>Name (FI)<input value={form.name_fi} onChange={set('name_fi')} /></label>
+        <label>Name (SV) *<input value={form.name_sv} onChange={set('name_sv')} required maxLength={255} /></label>
+        <label>Name (EN)<input value={form.name_en} onChange={set('name_en')} maxLength={255} /></label>
+        <label>Name (FI)<input value={form.name_fi} onChange={set('name_fi')} maxLength={255} /></label>
       </div>
 
       <div className="form-row">
@@ -63,7 +68,7 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
             {categories.map(c => <option key={c.id} value={c.id}>{c.label_sv}</option>)}
           </select>
         </label>
-        <label>{t('cfArea')}<input value={form.area} onChange={set('area')} /></label>
+        <label>{t('cfArea')}<input value={form.area} onChange={set('area')} maxLength={100} /></label>
       </div>
 
       <div className="form-row">
@@ -71,11 +76,11 @@ export default function ParkForm({ park, categories, onSave, onCancel, t }) {
         <label>Lng *<input type="number" step="any" value={form.lng} onChange={set('lng')} required /></label>
       </div>
 
-      <label>Description (SV)<textarea value={form.description_sv} onChange={set('description_sv')} rows={3} /></label>
-      <label>Description (EN)<textarea value={form.description_en} onChange={set('description_en')} rows={3} /></label>
-      <label>Description (FI)<textarea value={form.description_fi} onChange={set('description_fi')} rows={3} /></label>
+      <label>Description (SV)<textarea value={form.description_sv} onChange={set('description_sv')} rows={3} maxLength={2000} /></label>
+      <label>Description (EN)<textarea value={form.description_en} onChange={set('description_en')} rows={3} maxLength={2000} /></label>
+      <label>Description (FI)<textarea value={form.description_fi} onChange={set('description_fi')} rows={3} maxLength={2000} /></label>
 
-      <label>{t('cfFeatures')}<input value={form.features} onChange={set('features')} /></label>
+      <label>{t('cfFeatures')}<input value={form.features} onChange={set('features')} maxLength={500} /></label>
 
       <div className="form-actions">
         <button type="submit" className="btn-primary" disabled={saving}>{t('adminSave')}</button>

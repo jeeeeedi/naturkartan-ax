@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import ParkList from './ParkList.jsx'
 import ParkDetail from './ParkDetail.jsx'
 import AboutContact from './AboutContact.jsx'
+import Modal from '../Modal.jsx'
 
 export default function Sidebar({
   open, parks, categories, loading, selectedPark,
@@ -89,12 +90,9 @@ export default function Sidebar({
       </footer>
 
       {aboutOpen && (
-        <div className="modal-overlay" role="dialog" aria-modal="true" onClick={() => setAboutOpen(false)}>
-          <div className="modal-box about-modal-box" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setAboutOpen(false)} aria-label={t('cfClose')}>×</button>
-            <AboutContact t={t} />
-          </div>
-        </div>
+        <Modal onClose={() => setAboutOpen(false)} onOverlayClick={() => setAboutOpen(false)} extraClass="about-modal-box" t={t}>
+          <AboutContact t={t} />
+        </Modal>
       )}
     </aside>
   )

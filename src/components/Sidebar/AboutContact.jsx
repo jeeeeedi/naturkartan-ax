@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase.js'
+import { useFormFields } from '../../hooks/useFormFields.js'
 
 export default function AboutContact({ t }) {
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const { form, setForm, set } = useFormFields({ name: '', email: '', message: '' })
   const [sending, setSending] = useState(false)
   const [status, setStatus] = useState('idle') // idle | success | error
-
-  const set = (field) => (e) => {
-    setForm((f) => ({ ...f, [field]: e.target.value }))
-  }
 
   async function onSubmit(e) {
     e.preventDefault()

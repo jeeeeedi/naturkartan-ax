@@ -1,23 +1,12 @@
 import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, GeoJSON, Marker, Tooltip } from 'react-leaflet'
-import L from 'leaflet'
 import { supabase } from '../../lib/supabase.js'
-import { getFacilityMeta } from '../../lib/facilities.js'
+import { makeFacilityIcon } from '../../lib/iconUtils.js'
 
 function pathBounds(path) {
   const lats = path.coordinates.map(c => c[1])
   const lngs = path.coordinates.map(c => c[0])
   return [[Math.min(...lats), Math.min(...lngs)], [Math.max(...lats), Math.max(...lngs)]]
-}
-
-function makeFacilityIcon(typ) {
-  const { icon, color } = getFacilityMeta(typ)
-  return L.divIcon({
-    className: 'facility-marker-icon-wrap',
-    html: `<div style="background:${color};color:#fff;width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,0.85);box-shadow:0 2px 8px rgba(0,0,0,0.3)"><span style="font-family:'Material Symbols Outlined';font-size:15px;line-height:1;font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 20">${icon}</span></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  })
 }
 
 function TrailPreviewMap({ path, facilityPoints }) {
@@ -93,6 +82,7 @@ export default function ContributionReview({ onApplied, t }) {
       const coords = d.path.coordinates
       const mid = coords[Math.floor(coords.length / 2)]
       const [lng, lat] = mid
+      if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return
 
       const meta = {}
       if ((d.facility_points ?? []).length > 0) {
